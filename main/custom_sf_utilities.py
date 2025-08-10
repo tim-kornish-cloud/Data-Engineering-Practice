@@ -16,10 +16,12 @@ log.basicConfig(level = log.DEBUG)
 class Custom_SF_Utilities:
     def __init__(self):
         """Constructor Parameters:
-            currently not neccessary
+           - currently no customization used.
         """
     def login_to_salesForce(self, username, password, security_token, environment = ''):
         """
+        Description: log into a Salesforce or and return salesforce client
+                     to operate with.
         Parameters:
 
         Username        - string, salesforce Username
@@ -43,11 +45,143 @@ class Custom_SF_Utilities:
         # return instance of salesforce to perform operations with
         return sf
 
-    
+    def query_salesforce(self, sf, query, include_deleted = False):
+        """
+        Description: upload a SOQL query to salesforce and return
+                     a JSON object full of records.
+        Parameters:
+
+        sf              - Salesforce instance to query against
+        query           - string, SOQL query
+
+        Return:
+
+        query_results   - JSON formatted records
+        """
+        # log status to console of querying Salesforce
+        log.info('[Querying Salesforce orgs, include deleted records: ' + str(include_deleted) + ']')
+        # query salesforce and return results in json format
+        query_results = sf.query_all(query, include_deleted = include_deleted)
+        # return the json query results
+        return query_results
+
+    def load_query_into_DataFrame(self, query_results):
+        """
+        Description: intermediary function to load SOQL query
+                     that has lookup fields, requires more processing time.
+        Parameters:
+
+        query_results - OrderedDict, JSON formatted records
+
+        Return:
+
+        df            - DataFrame of the Salesforce Records
+        """
+        # use function to process query since it
+        # has log to detect if query uses lookups or not
+        return Utilities.load_query_with_lookups_into_DataFrame(self, query_results)
+
+    def un_nest_lookups(self, df, continue_loop = False, use_subset = True, subset_size = 1000):
+        """
+        Description: Process dataframe created from results of Salesforce Query
+                     loop through all the columns of the dataframe and
+                     check if each column has a nested dictionary indicating
+                     this column is a nested lookup to un nest.
+        Parameters:
+
+        df            - DataFrame of the Salesforce Records
+        continue_loop - recursive parameter to continue unpacking nested columns when set to true
+        use_subset    - use batches
+        subset_size   - batch size default to 1000
+
+        Return:
+
+        df            - DataFrame of the Salesforce Records
+        """
+        # use function to process query since it
+        # loop through each column in the dataframe
+        for column in df.columns:
+            # log to console which column is being checked
+            log.info('[Checking if column: ' + column + ' is a lookup]')
+            # use batches instead of the entire dataset
+            if use_subset:
+                # only check a batch size of data for lookups (only batch number of rows)
+                list_to_check = [True if type(row[column]) == OrderedDict else False for index, row in df.head(subset_size).iterrows()]
+            # dont use batches, use the entire dataset
+            else:
+                # check the entire dataset for lookups (load every row, more data intensive)
+                list_to_check = [True if type(row[column]) == OrderedDict else False for index, row in df.iterrows()]
+            # check if the list_to_check has any values created needing unnesting
+            column_contains_nested_values = np.any(list_to_check)
+            # if there are nested columns, pull the json object out
+            # and re-insert it into a flat structure
+            if column_contains_nested_values == True:
+                # create a temporary new dataframe with column count = 1
+                new_df = df[column].apply(pd.Series)
+                # remove attributes columns if exists to avoid parsing issue.
+                if 'attributes' in new_df.columns:
+                    # drop attributes columns,
+                    # creates duplicate with original layer if left in
+                    new_df.drop('attributes', axis = 1, inplace = True)
+                # modify name of unnested column
+                new_df = new_df.add_prefix(column + ".")
+                # add unnested column to the dataframe
+                df = pd.concat([df.drop(column, axis = 1), new_df], axis = 1)
+
+        # parse through all columns checking for any deeper unnested columns
+        # columns can have multiple layers of nesting,
+        # this function works one layer of all columns at a time
+        # not by one column finding every layer at a time
+        for column in df.columns:
+            # check if any column has type of ordered dict needing unnesting
+            if type(df[column][0]) == OrderedDict:
+                #continue loop
+                continue_loop = True
+        # Recursion check, if more unnested columns exist, go again
+        if continue_loop:
+            # recursive loop back again.
+            # note the continue loop parameter is set to false by defulat when not included
+            return self.un_nest_lookups(df)
+        # no more nested columns found to unnest, function is complete, return dataframe
+        else:
+            # return results of query with every columns properly separated.
+            return df
+
+    def load_query_with_lookups_into_DataFrame(self, query_results, use_subset = True, subset_size = 1000):
+        """
+        Description: Load SOQL query that has lookup fields, requires more processing time.
+        Parameters:
+
+        query_results - OrderedDict, JSON formatted records
+
+        Return:
+
+        df            - DataFrame of the Salesforce Records
+        """
+
+        # log info to console
+        log.info('[loading query results into DataFrames]')
+        # load query results json into a diction, then convert the dictionary
+        # to a pandas Dataframe
+        df = pd.DataFrame.from_dict(dict(query_results)['records'])
+        # check if there are nested object fields in the query results
+        if 'attributes' in df.columns:
+            # drop this column to avoid issue with unnesting the lookup fields
+             df.drop(['attributes'], axis = 1, inplace = True)
+        # log to console
+        log.info('[Unnesting columns for DF with: ' + str(len(df)) + ' records]')
+        # unnest lookup fields from query onto a flat array and return as a dataframe
+        df = self.un_nest_lookups(df, use_subset = use_subset, subset_size = subset_size)
+        # where a notnull NaN value is found, replace with None
+        df = df.where((pd.notnull(df)), None)
+        # log status of unnesting lookups into a new dataframe
+        log.info('[loaded ' + str(len(df)) + ' records into DataFrame]')
+        # return the query results as a pandas dataframe
+        return df
 
     def reformat_df_to_SF_records(self, df):
         """
-        Reformat df into list of dicts where each dict is a SF record
+        Description: Reformat df into list of dicts where each dict is a SF record
         Parameters:
 
         df - DataFrame, Salesforce records
@@ -65,6 +199,10 @@ class Custom_SF_Utilities:
 
     def upload_records_to_salesforce(self, sf, df, object_name, dml_operation, success_file = None, fallout_file = None, batch_size = 1000, external_id_field=None, time_delay = None):
         """
+        Description: upload dataframe of records to salesforce with dml operation.
+                     This function includes pre processing of dataframe to json for
+                     as well as post processing of results into separate
+                     success and fallout dataframes writing output to select files
         Parameters:
 
         sf                  - simple_salesforce instance used to log in and perform operations again Salesforce
