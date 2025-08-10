@@ -38,9 +38,8 @@ class Custom_SF_Utilities:
         Password        - string, salesforce Password
         security_token  - string, salesforce token
         environments    - string, used for logger to state which org being logged into
-        Return:
 
-        sf              - Salesforce instance to query against
+        Return: sf      - Salesforce instance to query against
         """
         # log status to console
         log.info('[Logging into source org: ' + environment + ']')
@@ -64,9 +63,7 @@ class Custom_SF_Utilities:
         sf              - Salesforce instance to query against
         query           - string, SOQL query
 
-        Return:
-
-        query_results   - JSON formatted records
+        Return: query_results - JSON formatted records
         """
         # log status to console of querying Salesforce
         log.info('[Querying Salesforce orgs, include deleted records: ' + str(include_deleted) + ']')
@@ -83,9 +80,7 @@ class Custom_SF_Utilities:
 
         query_results - OrderedDict, JSON formatted records
 
-        Return:
-
-        df            - DataFrame of the Salesforce Records
+        Return: pandas.DataFrame - DataFrame of the Salesforce Records
         """
         # use function to process query since it
         # has log to detect if query uses lookups or not
@@ -104,9 +99,7 @@ class Custom_SF_Utilities:
         use_subset    - use batches
         subset_size   - batch size default to 1000
 
-        Return:
-
-        df            - DataFrame of the Salesforce Records
+        Return: pandas.DataFrame - DataFrame of the Salesforce Records
         """
         # use function to process query since it
         # loop through each column in the dataframe
@@ -164,9 +157,7 @@ class Custom_SF_Utilities:
 
         query_results - OrderedDict, JSON formatted records
 
-        Return:
-
-        df            - DataFrame of the Salesforce Records
+        Return: pandas.DataFrame - DataFrame of the Salesforce Records
         """
 
         # log info to console
@@ -196,9 +187,7 @@ class Custom_SF_Utilities:
 
         df - DataFrame, Salesforce records
 
-        Return:
-
-        sf_records - list of dicts, each dict is a single layer deep, no nesting.
+        Return: sf_records - list of dicts, each dict is a single layer deep, no nesting.
         """
         #log to console, reformatting records to json format
         log.info('[Reformatting data for SF JSON]')
@@ -225,9 +214,7 @@ class Custom_SF_Utilities:
         external_id_field   - string, name of the external id field
         time_delay          - add a time delay between batch record uploads in case custom code needs to process between batches.
 
-        Return:
-
-        array of length 2, the fallout and success results separated in two DataFrames
+        Return: array of length 2, the fallout and success results separated in two DataFrames
         """
         # keep track of records attempted
         records_loaded = 0
@@ -321,9 +308,7 @@ class Custom_MSSQL_Utilities:
         Username        - string, salesforce Username
         Password        - string, salesforce Password
 
-        Return:
-
-        cursor          - cursor to execute queries with
+        Return: cursor
         """
         # log to console status of logging into database
         log.info('[Logging into MS SQL DB: ' + database + ']')
@@ -345,9 +330,8 @@ class Custom_MSSQL_Utilities:
 
         query           - query string
         cursor          - cursor creating upon login to execute the query
-        Return:
 
-        DataFrame       - Pandas DataFrame
+        Return: pandas.DataFrame
         """
         # log to console beginning query against mssql database
         log.info('[Querying MS SQL DB...]')
@@ -367,3 +351,166 @@ class Custom_MSSQL_Utilities:
         log.info('[loaded ' + str(len(results_df)) + ' records into DataFrame]')
         # return the results of the query as a pandas data frame
         return results_df
+
+class Custom_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+        """
+
+    def write_df_to_excel(self, dfs, file_name, sheet_names):
+        """
+        Description: Create a single excel file with multiple tabs
+        Parameters:
+
+        dfs         - list(df), list of dfs, order matters
+        file_name   - string, output filename
+        sheet_names - list(string), each tab name per df, order matters, must align with list of dfs
+
+        Return: None, write dataframes to files
+        """
+        # create instance of ExcelWrite to add sheets creted from dataframes
+        writer = pd.ExcelWriter(file_name)
+        # loop through list of multiple DataFrame
+        # each dataframe will be its own sheet on the document
+        for index, df in enumerate(dfs):
+            # write the individual dataframe to it's associated sheet
+            df.to_excel(writer, sheet_names[index], index = False)
+        # save the file
+        writer.save()
+
+    def encode_df(self, df, encoding = 'unicode_escape', decoding = 'utf-8'):
+        """
+        Description: encode strings in unicode_escape and decode back to utf-8 for processing records as utf-8
+        Parameters:
+
+        df          - pandas.DataFrame, to encode and decode as utf-8
+        encoding    - string, default to unicode_escape
+        decoding    - string, default to utf-8
+
+        Return: pandas.DataFrame
+        """
+        # log to console, beginning encoding data in dataframe
+        log.info('[encoding query results in DataFrames]')
+        # return the encoded data for strings
+        return df.map(lambda x : x.encode(encoding).decode(decoding) if isinstance(x, str) else x)
+
+
+
+
+    def add_sequence(self, df, group_fields, new_field, changing_fields = None, base_value = 10, increment_value = 10, sort = True):
+        """
+        Description: Create a new column that increments every time a group has
+                     changes on a specific subgroup of fields, sorting matters,
+                     This will sort the dataframe inplace.
+        Parameters:
+
+        df                      - DataFrame with the groups sorted
+        group_fields            - python list of all fields to group the sequence by
+        new_fields              - sequence field
+        changing_fields         - optional, can declare what field is changing to compare against the group fields
+        base_value              - starting value of the sequence
+        increment_value         - incrementing value of the sequence
+        sort                    - sort by group fields first then the changing field, changing_field must be declared
+
+        Return: df              - DataFrame with an added column with value changing sequence
+        """
+        # sort the values of the data frame by the sort fields selected
+        if sort:
+            # log to console beginning sorted
+            log.info('[Sorting DataFrame before generating list.]')
+            # create list of fields to sort the dataframe by
+            sort_fields = group_fields.append(changing_fields)
+            # sort the dataframe based on the sort fields
+            df.sort_values(sort_fields, inplace = True)
+        # log to console what the new field is called that will hold the sequence
+        log.info('[generating sequence for: ' + new_field + ']')
+        # if there is no field declared how to sequence the group
+        if changing_fields == None:
+            # iterrate throught the dataframe row by row
+            for index, row in df.iterrows():
+                # every 10,000 rows add a log output for timekeeping
+                if index % 10000 == 0:
+                    # log to console a timestamp and number of rows processed
+                    log.info('[rows processed: ' + str(index) + ']')
+                # if the current row's group is not the same as the previous row's group
+                if int(index) == 0 or not (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])):
+                    # start the sequence again based on the starting base value
+                    df.loc[index, new_field] = base_value
+                # the current row's group matches the last row's group values
+                else:
+                    # increment the value showing this row's group matches the previous row's group
+                    df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
+        # there is a declared field to sequence the group fields,
+        # show what column to sequence the groups by
+        else:
+            # iterrate through the dataframe row by row
+            for index, row in df.iterrows():
+                # if on the first row
+                if int(index) == 0:
+                    # set the bast value to begin the sequence on
+                    df.loc[index, new_field] = base_value
+                # any row after the first row
+                else:
+                    # the current row group value is the same as the previous row, increment the sequence value
+                    if (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])) and not (df.loc[int(index) - 1, changing_fields].equals(df.loc[index, changing_fields])):
+                        # increment the sequence value in the new column
+                        df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
+                    # the current row is part of a new group than the previous row
+                    else:
+                        # start the sequence over again on the current row
+                        df.loc[index, new_field] = base_value
+        # return the dataframe with the added column
+        return df
+
+    def generate_sql_list_from_df_column(self, df, column, output_file_name = None, return_line = False, output = 'file'):
+        """
+        Description: generate a string list of values from a dataframe column to inject into a query
+        Parameters:
+
+        df,
+        column,
+        output_file_name = None,
+        return_line = False,
+        output
+
+        Return:     - string, sql string formatted list of values
+        """
+
+        # begin the string list that will be return by the funciont
+        sql_string = "("
+        # loop through the rows of the dataframe to add values to the stirng
+        for index, row in df.iterrows():
+            # if the string should start a new line after every
+            if return_line:
+                # add new value to the sql string on a new line every entry
+                sql_string  = sql_string + "'" + str(row[column]) + "',\n"
+            # generate every value of the list on a single line
+            else:
+                # add new value to the sql string on the same line
+                sql_string  = sql_string + "'" + str(row[column]) + "',"
+        # at the end of all the values added, add the closing parenthesis
+        # remove ending new line if used
+        if return_line:
+            # remove the new line and add ending parenthesis
+            sql_string = sql_string[:-2] + ")"
+        # since all value are on same line, no need to trim extra new line in string
+        else:
+            # add ending parenthesis to sql string list
+            sql_string = sql_string[:-1] + ")"
+        # if the sql string is to be written to a file for further use
+        if output == 'file' and output_file_name != None:
+            # log to console, attempting output sql string to a file
+            log.info('[Converting DataFrame Column to SQL List in text file: \n ' + output_file_name + ' ]\n')
+            # open the file in write mode
+            with open(output_file_name, 'w') as file:
+                # write the sql string to the file and close once done
+                file.write(sql_string)
+        # if the sql string should be returned instead of written to file
+        elif output == 'string':
+            # retun sql string as list
+            return sql_string
+        # if don't write sql string to file, and don't return the string
+        else:
+            # do nothing
+            return None
