@@ -72,6 +72,34 @@ class Custom_SF_Utilities:
         # return the json query results
         return query_results
 
+    def format_date_to_salesforce_date(self, df, columns, format = '%m/%d/%Y'):
+        """
+        Description: format specified columns in a dataframe to be compatible with Salesforce
+        Parameters:
+
+        df          - pandas.DataFrame
+        columns     - list of string or string column names to format
+        format      - default salesforce format = '%m/%d/%Y'
+
+        Return: query_results - JSON formatted records
+        """
+        #setup df that will be returned by function
+        return_df = df
+        # check if formatting a single column
+        if type(columns) == str:
+            # reformat the single column
+            return_df[columns] = pd.to_datetime(df[columns], format = format).dt.normalize().apply(lambda x : str(x)[:10])
+        # formatting list of columns
+        elif type(columns) == list:
+            # loop through list of columns to format one by one
+            for column in columns:
+                # format the column in this loop of the list
+                return_df[column] = pd.to_datetime(df[column], format = format).dt.normalize().apply(lambda x : str(x)[:10])
+                # replace blanks due to reformat
+                return_df.replace({column : {'NaT' : None, '' : None}}, inplace = True)
+        # return the reformatted dataframe
+        return return_df
+
     def load_query_into_DataFrame(self, query_results):
         """
         Description: intermediary function to load SOQL query
@@ -514,3 +542,15 @@ class Custom_Utilities:
         else:
             # do nothing
             return None
+
+    def now(self, ts_format='%Y-%m-%d__%H-%M-%S'):
+        """
+        Description: generate a string list of values from a dataframe column to inject into a query
+        Parameters:
+
+        ts_format - default to '%Y-%m-%d__%H-%M-%S'
+
+        Return:     - datetime of right now down to the second.
+        """
+        # return datetime of right now
+        return datetime.fromtimestamp(time.time()).strftime(ts_format)
