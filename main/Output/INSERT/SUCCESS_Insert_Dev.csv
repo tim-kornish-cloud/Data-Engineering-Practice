@@ -1,0 +1,11 @@
+AccountNumber,Name,NumberOfEmployees,NumberofLocations__c,Phone,RESULTS_success,RESULTS_created,RESULTS_id,RESULTS_errors
+31,Reggy,9,72,702-389-2074,True,True,001gL00000GrVsUQAV,[]
+32,Modestia,52,13,731-363-5557,True,True,001gL00000GrVsVQAV,[]
+33,Jessie,12,82,211-541-0972,True,True,001gL00000GrVsWQAV,[]
+34,Josias,64,51,604-618-8843,True,True,001gL00000GrVsXQAV,[]
+35,Bernete,30,70,404-506-1731,True,True,001gL00000GrVsYQAV,[]
+36,Cheslie,95,20,800-696-8600,True,True,001gL00000GrVsZQAV,[]
+37,Nicolina,36,27,911-150-9649,True,True,001gL00000GrVsaQAF,[]
+38,Goldy,86,20,208-276-8489,True,True,001gL00000GrVsbQAF,[]
+39,Norry,62,91,258-574-7559,True,True,001gL00000GrVscQAF,[]
+40,Lorry,47,4,978-752-2145,True,True,001gL00000GrVsdQAF,[]

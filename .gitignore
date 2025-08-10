@@ -3,3 +3,8 @@ credentials.py
 *.properties
 *.txt
 *.vsidx
+Output\*.csv
+*.wsuo
+*.json
+*.pyc
+*.sqlite
