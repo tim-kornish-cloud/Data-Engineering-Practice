@@ -63,6 +63,15 @@ accounts_to_update_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_
 # encode the dataframe before uploading to delete
 accounts_to_update_df = Utils.encode_df(accounts_to_update_df)
 
+#match queried accounts with CSV accounts based on join of accountNumber field
+
+#add new column called type and set all accounts to government
+accounts_to_update_df["Type"] = "Prospect"
+#add new column called type and set all accounts to government
+accounts_to_update_df["Industry"] = "Government"
+
+
+accounts_to_update_df = accounts_to_update_df[accounts_to_update_df["Id", "Type", "Industry", ]]
 print(accounts_to_update_df.head())
 
 # upload the records to salesforce

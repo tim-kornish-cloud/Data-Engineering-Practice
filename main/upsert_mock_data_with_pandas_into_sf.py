@@ -24,8 +24,11 @@ Cred = Credentials()
 # can have multiple environments in the same script at the same time
 environment = 'Dev'
 
-#number of records to delete
+#number of records to attempted
 num_of_records = 10
+
+#starting index to choose records
+record_start = 30
 
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
@@ -56,14 +59,11 @@ token = Cred.get_token("Salesforce", environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(username, password, token)
 
-# query salesforce and return the accounts to be deleted
-account_query_results = SF_Utils.query_salesforce(sf, account_query)
-# convert query results to a dataframe
-accounts_to_upsert_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
-# encode the dataframe before uploading to delete
-accounts_to_upsert_df = Utils.encode_df(accounts_to_upsert_df)
+# select only 10 records
+df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 
-print(accounts_to_upsert_df.head())
+# select only 10 records
+df_to_upsert = mock_df.iloc[record_start:record_start+num_of_records]
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, accounts_to_upsert_df, 'Account', 'upsert', success_file, fallout_file)
+SF_Utils.upload_records_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file)
