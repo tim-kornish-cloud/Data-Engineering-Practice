@@ -1,3 +1,13 @@
+"""
+Author: Timothy Kornish
+CreatedDate: August - 10 - 2025
+Description: A backend utility file for logging into Salesforce,
+             querying results with added pre-processing, post-processing,
+             and logging to the console for time recording
+             of execution start and end results.
+
+"""
+
 from ctypes import util
 import numpy as np
 import pandas as pd
@@ -293,3 +303,67 @@ class Custom_SF_Utilities:
         else:
             #log to console, nothing included in dataframe to process
             log.info('[No Records to process]')
+
+class Custom_MSSQL_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+        """
+
+    def login_to_MSSQL(self, server, database, username, password, driver = 'SQL Server'):
+        """
+        Description: login to a MSSQL server and return a cursor object to query with
+        Parameters:
+
+        driver          - SQL Server Driver
+        server          - IP address of server, I.E. 127.0.0.1
+        database        - Database name
+        Username        - string, salesforce Username
+        Password        - string, salesforce Password
+
+        Return:
+
+        cursor          - cursor to execute queries with
+        """
+        # log to console status of logging into database
+        log.info('[Logging into MS SQL DB: ' + database + ']')
+        # create instance of cursor to connect to MSSQL database.
+        cursor_connection = pyodbc.connect(driver='{ODBC Driver 17 for SQL Server}', host=server, database=database,
+                       user=username, password=password)
+        # log to console the cursor is created
+        log.info('[Creating Cursor]')
+        #convert the instance to a cursor
+        cursor = cursor_connection.cursor()
+        #return the cursor to use to query against the database
+        return cursor
+
+    def query_MSSQL_return_DataFrame(self, query, cursor):
+        """
+        Description: query a MSSQL server with a logged in cursor and
+        process results into a pandas dataframe the return the dataframe.
+        Parameters:
+
+        query           - query string
+        cursor          - cursor creating upon login to execute the query
+        Return:
+
+        DataFrame       - Pandas DataFrame
+        """
+        # log to console beginning query against mssql database
+        log.info('[Querying MS SQL DB...]')
+        # execute query with cursor
+        cursor = cursor.execute(query)
+        # convert the results into a list of columns
+        columns = [column[0] for column in cursor.description]
+        # log to console status of querying records
+        log.info('[Condensing results into Dict...]')
+        # convert the columns and rows of data into a list of dicts
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        # log to console status of querying records
+        log.info('[transforming Dict into DataFrame...]')
+        # convert the list of dicts into a pandas dataframe
+        results_df = pd.DataFrame(results)
+        # log to console status of querying records
+        log.info('[loaded ' + str(len(results_df)) + ' records into DataFrame]')
+        # return the results of the query as a pandas data frame
+        return results_df
