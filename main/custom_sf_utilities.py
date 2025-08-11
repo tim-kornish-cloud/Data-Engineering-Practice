@@ -20,7 +20,10 @@ import time
 import logging as log
 import coloredlogs
 
+# initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
+# set debug level for which debugging is output to console,
+# currently only using info debug level comments
 log.basicConfig(level = log.DEBUG)
 
 class Custom_SF_Utilities:
@@ -171,7 +174,7 @@ class Custom_SF_Utilities:
         # Recursion check, if more unnested columns exist, go again
         if continue_loop:
             # recursive loop back again.
-            # note the continue loop parameter is set to false by defulat when not included
+            # note the continue loop parameter is reset to false by defulat when not included
             return self.un_nest_lookups(df)
         # no more nested columns found to unnest, function is complete, return dataframe
         else:
@@ -386,6 +389,30 @@ class Custom_Utilities:
            - currently no customization used.
         """
 
+    def merge_dfs(self, left, right, left_on, right_on, how ='inner',
+                  suffixes = ('_left', '_right'), indicator = True, validate = None):
+        """
+        Description: merge two dataframes based on list of columns to join on
+        Parameters:
+
+        left                - left dataframe
+        right               - right dataframe
+        left_on             - list of string column names to perform merge on
+        right_on            - list of string column names to perform merge on
+        how='inner'         - what type of join to use for the merge, inner reduces duplicate the best
+        suffixes            - tuple of string to append to the end of columns from each dataframe
+        indicator           - indicate left/right/both dataframe the row is found in
+        validate            - can check for 1:1/1:many/many:1/many:many merges
+
+        Return: merged dataframe
+        """
+        # log to console merging of dataframe is occuring
+        log.info('[merging dataframes...]')
+        # return merged dataframe
+        return pd.merge(left=left, right=right,
+                        how=how, left_on=left_on, right_on=right_on,
+                        suffixes=suffixes, indicator=indicator, validate=validate)
+
     def write_df_to_excel(self, dfs, file_name, sheet_names):
         """
         Description: Create a single excel file with multiple tabs
@@ -401,9 +428,14 @@ class Custom_Utilities:
         writer = pd.ExcelWriter(file_name)
         # loop through list of multiple DataFrame
         # each dataframe will be its own sheet on the document
+        log.info('[writing each sheet to excelfile]')
         for index, df in enumerate(dfs):
+            #log to console what sheet is being written
+            log.info('[writing sheet to excel file: ' + str(sheet_names[index]) + ']')
             # write the individual dataframe to it's associated sheet
             df.to_excel(writer, sheet_names[index], index = False)
+        # log finished looping and now writing file out
+        log.info('[saving file to output location]')
         # save the file
         writer.save()
 
