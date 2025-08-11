@@ -4,6 +4,10 @@ credentials.py
 *.txt
 *.vsidx
 Output\*.csv
+Output\DELETE\*.csv
+Output\INSERT\*.csv
+Output\UPDATE\*.csv
+Output\UPSERT\*.csv
 *.wsuo
 *.json
 *.pyc
