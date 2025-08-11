@@ -27,6 +27,9 @@ environment = 'Dev'
 #number of records to delete
 num_of_records = 10
 
+#starting index to choose records
+record_start = 30
+
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
 account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
@@ -40,6 +43,12 @@ success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + environment + ".
 # fallout file path
 fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + environment + ".csv"
 
+# set input path for mock data csv
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
+
+# read mock data csv from mockaroo.com into a pandas datafrome
+# file contains 1000 records
+mock_df = pd.read_csv(input_csv_file)
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
@@ -64,6 +73,19 @@ accounts_to_update_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_
 accounts_to_update_df = Utils.encode_df(accounts_to_update_df)
 
 #match queried accounts with CSV accounts based on join of accountNumber field
+# query string to select records from salesforce
+# before uploading with a delete  DML operation
+account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+
+# query salesforce and return the accounts to be deleted
+account_query_results = SF_Utils.query_salesforce(sf, account_query)
+# convert query results to a dataframe
+accounts__df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
+
+# select only 10 records to process
+df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
+
+accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload)
 
 #add new column called type and set all accounts to government
 accounts_to_update_df["Type"] = "Prospect"

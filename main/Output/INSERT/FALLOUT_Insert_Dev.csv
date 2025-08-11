@@ -1,1 +1,1 @@
-AccountNumber,Name,NumberOfEmployees,NumberofLocations__c,Phone,RESULTS_success,RESULTS_created,RESULTS_id,RESULTS_errors
+AccountNumber,Name,NumberOfEmployees,NumberofLocations__c,Phone,SLA__c,SLASerialNumber__c,Account_Number_External_ID__c,RESULTS_success,RESULTS_created,RESULTS_id,RESULTS_errors
