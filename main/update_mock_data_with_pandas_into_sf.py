@@ -25,14 +25,10 @@ Cred = Credentials()
 environment = 'Dev'
 
 #number of records to delete
-num_of_records = 10
+num_of_records = 5
 
 #starting index to choose records
-record_start = 30
-
-# query string to select records from salesforce
-# before uploading with a delete  DML operation
-account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+record_start = 0
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -65,36 +61,35 @@ token = Cred.get_token("Salesforce", environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(username, password, token)
 
-# query salesforce and return the accounts to be deleted
-account_query_results = SF_Utils.query_salesforce(sf, account_query)
-# convert query results to a dataframe
-accounts_to_update_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
-# encode the dataframe before uploading to delete
-accounts_to_update_df = Utils.encode_df(accounts_to_update_df)
-
-#match queried accounts with CSV accounts based on join of accountNumber field
+# match queried accounts with CSV accounts based on join of accountNumber field
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
-account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
 
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 # convert query results to a dataframe
-accounts__df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
+accounts_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
+# encode the dataframe before uploading to delete
+accounts_df = Utils.encode_df(accounts_df)
 
 # select only 10 records to process
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
+print(accounts_df.head())
+print(df_to_upload.head())
+accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = True)
 
-accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload)
 
+print(accounts_to_update_df.head())
 #add new column called type and set all accounts to government
 accounts_to_update_df["Type"] = "Prospect"
 #add new column called type and set all accounts to government
 accounts_to_update_df["Industry"] = "Government"
+print(accounts_to_update_df.head())
 
-
-accounts_to_update_df = accounts_to_update_df[accounts_to_update_df["Id", "Type", "Industry", ]]
+accounts_to_update_df = accounts_to_update_df[["Id", "Type", "Industry", ]]
 print(accounts_to_update_df.head())
 
 # upload the records to salesforce
+
 SF_Utils.upload_records_to_salesforce(sf, accounts_to_update_df, 'Account', 'update', success_file, fallout_file)

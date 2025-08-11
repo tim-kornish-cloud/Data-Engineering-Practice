@@ -28,11 +28,7 @@ environment = 'Dev'
 num_of_records = 10
 
 #starting index to choose records
-record_start = 30
-
-# query string to select records from salesforce
-# before uploading with a delete  DML operation
-account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+record_start = 5
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -43,6 +39,12 @@ success_file = dir_path + "\\Output\\UPSERT\\SUCCESS_Upsert_" + environment + ".
 # fallout file path
 fallout_file = dir_path + "\\Output\\UPSERT\\FALLOUT_Upsert_" + environment + ".csv"
 
+# set input path for mock data csv
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
+
+# read mock data csv from mockaroo.com into a pandas datafrome
+# file contains 1000 records
+mock_df = pd.read_csv(input_csv_file)
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
@@ -60,10 +62,16 @@ token = Cred.get_token("Salesforce", environment)
 sf = SF_Utils.login_to_salesForce(username, password, token)
 
 # select only 10 records
-df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
+df_to_upload = mock_df.iloc[record_start:record_start+num_of_records, :]
 
 # select only 10 records
-df_to_upsert = mock_df.iloc[record_start:record_start+num_of_records]
+df_to_upsert = mock_df.iloc[record_start:record_start+num_of_records, :]
+
+#add new column called type and set all accounts to government
+df_to_upsert["Type"] = "Prospect"
+#add new column called type and set all accounts to government
+df_to_upsert["Industry"] = "Government"
+print(df_to_upsert.head(10))
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file)
+SF_Utils.upload_records_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file, batch_size = 1000, external_id_field = 'Account_Number_External_ID__c')
