@@ -8,6 +8,7 @@ Output\DELETE\*.csv
 Output\INSERT\*.csv
 Output\UPDATE\*.csv
 Output\UPSERT\*.csv
+**/Output/
 *.wsuo
 *.json
 *.pyc
