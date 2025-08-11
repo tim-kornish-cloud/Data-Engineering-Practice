@@ -1,8 +1,7 @@
 """
 Author: Timothy Kornish
 CreatedDate: August - 10 - 2025
-Description: Log into Salesforce and delete a specific set of accounts
-             based on query criteria
+Description: Log into Salesforce and delete all accounts with CreatedBy.Name = 'Timothy Kornish'
 
 """
 
@@ -23,9 +22,6 @@ Cred = Credentials()
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
 environment = 'Dev'
-
-#number of records to delete
-num_of_records = 10
 
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
@@ -62,8 +58,6 @@ account_query_results = SF_Utils.query_salesforce(sf, account_query)
 accounts_to_delete_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
 # encode the dataframe before uploading to delete
 accounts_to_delete_df = Utils.encode_df(accounts_to_delete_df)
-
-print(accounts_to_delete_df.head())
 
 # upload the records to salesforce
 SF_Utils.upload_records_to_salesforce(sf, accounts_to_delete_df, 'Account', 'delete', success_file, fallout_file)

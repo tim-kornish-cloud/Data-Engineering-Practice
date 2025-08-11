@@ -28,7 +28,7 @@ environment = 'Dev'
 num_of_records = 10
 
 #starting index to choose records
-record_start = 30
+record_start = 0
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))

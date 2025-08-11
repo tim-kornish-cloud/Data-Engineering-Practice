@@ -75,21 +75,18 @@ accounts_df = Utils.encode_df(accounts_df)
 
 # select only 10 records to process
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
-print(accounts_df.head())
-print(df_to_upload.head())
+
+#merge the csv data with the salesforce data to match SF Ids to the CSV accounts
 accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = True)
 
-
-print(accounts_to_update_df.head())
 #add new column called type and set all accounts to government
 accounts_to_update_df["Type"] = "Prospect"
 #add new column called type and set all accounts to government
 accounts_to_update_df["Industry"] = "Government"
-print(accounts_to_update_df.head())
 
+# isolate which account fields will be used in the update
+# only updating the two fields Type and Industry
 accounts_to_update_df = accounts_to_update_df[["Id", "Type", "Industry", ]]
-print(accounts_to_update_df.head())
 
 # upload the records to salesforce
-
 SF_Utils.upload_records_to_salesforce(sf, accounts_to_update_df, 'Account', 'update', success_file, fallout_file)
