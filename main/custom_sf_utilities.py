@@ -14,6 +14,8 @@ import pandas as pd
 from simple_salesforce import Salesforce
 import pyodbc
 import mysql.connector
+import boto3
+import awswrangler as wr
 from datetime import datetime
 from collections import OrderedDict
 import time
@@ -689,6 +691,61 @@ class Custom_MySQL_Utilities:
         cursor.execute(sql_delete, value_to_delete)
         # commit the sql statement
         connection.commit()
+
+class S3_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+        """
+
+    def create_s3_client(self, s3 = 's3'):
+        return boto3.client(s3)
+
+    def download_file_from_s3_to_local(self, bucket_name = 'your-s3-bucket-name',
+                                             object_key = 'path/to/your/file.txt',
+                                             local_file_path = 'downloaded_file.txt'):
+        """Description: # Define your bucket name, object key (file path in S3), and local file path
+        Parameters:
+
+        Return:
+        """
+        try:
+            s3.download_file(bucket_name, object_key, local_file_path)
+            log.info(f"File '{object_key}' downloaded to '{local_file_path}' successfully.")
+        except Exception as e:
+            log.info(f"Error downloading file: {e}")
+
+    def view_s3_content(self, s3, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/text_file.txt'):
+            """Description: # Define your bucket name, object key (file path in S3), and local file path
+            Parameters:
+
+            Return:
+            """
+        try:
+            response = s3.get_object(Bucket=bucket_name, Key=object_key)
+            object_content = response['Body'].read().decode('utf-8') # Decode for text files
+            log.info("Content of the S3 object:")
+            log.info(object_content)
+        except Exception as e:
+            log.info(f"Error reading object content: {e}")
+
+    def load_csv_from_s3_to_df(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
+        # Read CSV directly from S3 using pandas
+        try:
+            df = pd.read_csv(s3_file)
+            log.info("DataFrame from S3:")
+            log.info(df.head())
+        except Exception as e:
+            log.info(f"Error reading CSV from S3: {e}")
+        return df
+
+# Alternatively, using awswrangler for more robust S3 integration
+# try:
+#     df_wr = wr.s3.read_csv(path=f"s3://your-s3-bucket-name/path/to/your/data.csv")
+#     print("DataFrame from S3 (using awswrangler):")
+#     print(df_wr.head())
+# except Exception as e:
+#     print(f"Error reading CSV from S3 with awswrangler: {e}")
 
 class Custom_Utilities:
     def __init__(self):
