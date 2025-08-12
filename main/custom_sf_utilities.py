@@ -427,7 +427,7 @@ class Custom_MSSQL_Utilities:
 
         #for loop only works when provided a list of column converted types
         log.info('[Converting data types in DataFrame...]')
-        #loop through each column to convert every value
+        #loop through each column to convert the type every value
         for index, col in enumerate(df.columns):
             #confirm the index is still within range of acceptable indexes
             if index < len(column_types):
@@ -455,6 +455,30 @@ class Custom_MSSQL_Utilities:
         if close_connection:
             # close the connection
             connection.close()
+
+    def update_rows_in_mssql_table(self, df, table_name, id_column_name):
+        """Description
+           Parameters
+
+           df,
+           table_name,
+           id_column_name
+
+           Return: None - delete records
+        """
+        # Example with parameterization
+        sql_update = """ example:
+        UPDATE <table_name>
+        SET <column_name> = <value, corresponding column value>
+        WHERE <Where_column_name> = <correspondin conditional value>;"""
+        # loop through df column to generate a list of values to
+        # set as valid for deletion
+        value_to_update = [tuple(x) for x in df.values]
+        #execute the deletion of records
+        cursor.execute(sql_update, value_to_update)
+        # commit the sql statement
+        connection.commit()
+
     def delete_rows_in_mssql_table(self, df, value_to_delete, table_name, column_name):
         """Description
            Parameters
@@ -470,7 +494,7 @@ class Custom_MSSQL_Utilities:
         sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " = ?"
         # loop through df column to generate a list of values to
         # set as valid for deletion
-        value_to_delete
+        value_to_delete = [tuple(x) for x in df.values]
         #execute the deletion of records
         cursor.execute(sql_delete, value_to_delete)
         # commit the sql statement
