@@ -455,6 +455,26 @@ class Custom_MSSQL_Utilities:
         if close_connection:
             # close the connection
             connection.close()
+    def delete_rows_in_mssql_table(self, df, value_to_delete, table_name, column_name):
+        """Description
+           Parameters
+
+           df
+           value_to_delete - name of column in dataframe to delete data from the corresponding mssql table
+           table_name
+           column_name
+
+           Return: None - delete records
+        """
+        # Example with parameterization
+        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " = ?"
+        # loop through df column to generate a list of values to
+        # set as valid for deletion
+        value_to_delete
+        #execute the deletion of records
+        cursor.execute(sql_delete, value_to_delete)
+        # commit the sql statement
+        connection.commit()
 
 
 class Custom_Utilities:
