@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from simple_salesforce import Salesforce
 import pyodbc
+import mysql.connector
 from datetime import datetime
 from collections import OrderedDict
 import time
@@ -328,9 +329,7 @@ class Custom_MSSQL_Utilities:
            - currently no customization used.
         """
 
-    def login_to_MSSQL(self,  server = None, database = '', username = None,
-                      password = None, use_windows_authentication = True,
-                      driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
+    def login_to_MSSQL(self,  server = None, database = '', username = None, password = None, use_windows_authentication = True, driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
@@ -456,7 +455,7 @@ class Custom_MSSQL_Utilities:
             # close the connection
             connection.close()
 
-    def update_rows_in_mssql_table(self, df, table_name, id_column_name):
+    def update_rows_in_MSSQL_table(self, df, table_name, id_column_name):
         """Description
            Parameters
 
@@ -479,7 +478,7 @@ class Custom_MSSQL_Utilities:
         # commit the sql statement
         connection.commit()
 
-    def delete_rows_in_mssql_table(self, df, value_to_delete, table_name, column_name):
+    def delete_rows_in_MSSQL_table(self, df, value_to_delete, table_name, column_name):
         """Description
            Parameters
 
@@ -500,6 +499,196 @@ class Custom_MSSQL_Utilities:
         # commit the sql statement
         connection.commit()
 
+class Custom_MySQL_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+        """
+
+    def login_to_MySQL(self,  server = None, database = '', username = None,
+                      password = None, use_windows_authentication = True,
+                      driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
+        """
+        Description: login to a MSSQL server and return a cursor object to query with
+        Parameters:
+
+        driver          - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
+        server          - IP address of server, I.E. 127.0.0.1
+        database        - Database name
+        Username        - string, salesforce Username
+        Password        - string, salesforce Password
+
+        Return: cursor
+        """
+        #attempt to connect
+        try:
+            cursor_connection = mysql.connector.connect(
+                host=server#"localhost",  - Or the IP address/hostname of your MySQL server
+                user=username#"your_username",
+                password=password#"your_password",
+                database=database#"your_database_name" - Optional: specify a database to connect to directly
+            )
+            log.info("[Connected to MySQL database successfully!]")
+
+        except mysql.connector.Error as err:
+            if err.errno == mysql.connector.errorcode.ER_ACCESS_DENIED_ERROR:
+                log.info("Something is wrong with your user name or password")
+            if err.errno == mysql.connector.errorcode.ER_BAD_DB_ERROR:
+                log.info("Database does not exist")
+            else:
+                log.info(err)
+
+        if 'cursor_connection' in locals() and cnx.is_connected(): # Check if connection was successful
+        cursor = cursor_connection.cursor()
+        #convert the instance to a cursor
+        cursor = cursor_connection.cursor()
+        # log to console the cursor is created
+        log.info('[Creating Cursor]')
+        #return the connection and cursor to use to query against the database
+        return (cursor_connection, cursor)
+
+    def query_MySQL_return_DataFrame(self, query, cursor):
+        """
+        Description: query a MSSQL server with a logged in cursor and
+        process results into a pandas dataframe the return the dataframe.
+        Parameters:
+
+        query           - query string
+        cursor          - cursor creating upon login to execute the query
+
+        Return: pandas.DataFrame
+        """
+
+        # For example: cursor.execute("SELECT * FROM your_table")
+        # results = cursor.fetchall()
+        # log to console beginning query against mssql database
+        log.info('[Querying MS SQL DB...]')
+        cursor.execute(query)
+        results = cursor.fetchall()
+        if 'cursor_connection' in locals() and cursor_connection.is_connected():
+        cursor.close() # Close the cursor first if it was created
+        cursor_connection.close()
+        log.info("MySQL connection closed.")
+
+        """this below is still mssql code, need to verify"""
+        # convert the results into a list of columns
+        columns = [column[0] for column in cursor.description]
+        # log to console status of querying records
+        log.info('[Condensing results into Dict...]')
+        # convert the columns and rows of data into a list of dicts
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        # log to console status of querying records
+        log.info('[transforming Dict into DataFrame...]')
+        # convert the list of dicts into a pandas dataframe
+        results_df = pd.DataFrame(results)
+        # log to console status of querying records
+        log.info('[loaded ' + str(len(results_df)) + ' records into DataFrame]')
+        # return the results of the query as a pandas data frame
+        return results_df
+
+    def insert_dataframe_into_MySQL_table(self, connection, cursor, df, tablename, column_types = [], cols = '', use_all_columns_in_df = True, close_connection = True):
+        """Description:
+        Parameters:
+
+        connection
+        cursor
+        df
+        tablename
+        column_types
+        cols
+        use_all_columns_in_df
+        close_connection
+
+        return: none - insert records into mssql # DEBUG:
+        Current issue 8/11/25:
+        # current method causes warning with chained indexing instead of using .loc or .iloc
+        # error is just making a getattr call twice instead of once and some other things that improve speed but not a breaking issue
+        # will update to .loc/.iloc at a later point, just need a working function for now
+
+        """
+        # if the df column list matches the table, use all columns
+        if use_all_columns_in_df:
+            # generate a list of all columns
+            cols = ','.join([k for k in df.dtypes.index])
+        # generate a list of '?' to be replaced by the actual values of the dataframe
+        params = ','.join('?' * len(df.columns))
+        # generate the sql commit with the dataframe
+        sql = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(tablename, cols, params)
+
+        #for loop only works when provided a list of column converted types
+        log.info('[Converting data types in DataFrame...]')
+        #loop through each column to convert the type every value
+        for index, col in enumerate(df.columns):
+            #confirm the index is still within range of acceptable indexes
+            if index < len(column_types):
+                #check if type == int
+                if column_types[index] == 'int':
+                    df[col] = df[col].astype(int)
+                #check if type == string
+                if column_types[index] == 'str':
+                    df[col] = df[col].astype(str)
+                #check if type == float
+                if column_types[index] == 'float':
+                    df[col] = df[col].astype(float)
+                #check if type == boolean
+                if column_types[index] == 'bool':
+                    df[col] = df[col].astype(bool)
+        #convert the rows in the dataframe into tuples
+        data = [tuple(x) for x in df.values]
+        #set the bulk insert for pyodbc cursor.fast_executemany = True
+        cursor.fast_executemany = True
+        #execute insert of records
+        cursor.executemany(sql, data)
+        # commit the sql statement
+        connection.commit()
+        # close the connection if desired
+        if close_connection:
+            # close the connection
+            connection.close()
+
+    def update_rows_in_MySQL_table(self, df, table_name, id_column_name):
+        """Description
+           Parameters
+
+           df,
+           table_name,
+           id_column_name
+
+           Return: None - delete records
+        """
+        # Example with parameterization
+        sql_update = """ example:
+        UPDATE <table_name>
+        SET <column_name> = <value, corresponding column value>
+        WHERE <Where_column_name> = <correspondin conditional value>;"""
+        # loop through df column to generate a list of values to
+        # set as valid for deletion
+        value_to_update = [tuple(x) for x in df.values]
+        #execute the deletion of records
+        cursor.execute(sql_update, value_to_update)
+        # commit the sql statement
+        connection.commit()
+
+    def delete_rows_in_MySQL_table(self, df, value_to_delete, table_name, column_name):
+        """Description
+           Parameters
+
+           df
+           value_to_delete - name of column in dataframe to delete data from the corresponding mssql table
+           table_name
+           column_name
+
+           Return: None - delete records
+        """
+        # Example with parameterization
+        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " = ?"
+        # loop through df column to generate a list of values to
+        # set as valid for deletion
+        value_to_delete = [tuple(x) for x in df.values]
+        #execute the deletion of records
+        cursor.execute(sql_delete, value_to_delete)
+        # commit the sql statement
+        connection.commit()
 
 class Custom_Utilities:
     def __init__(self):
