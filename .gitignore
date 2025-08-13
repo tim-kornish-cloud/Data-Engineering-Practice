@@ -1,5 +1,6 @@
 credentials.properties
 credentials.py
+*.tf
 *.properties
 *.txt
 *.vsidx
@@ -13,3 +14,4 @@ Output\UPSERT\*.csv
 *.json
 *.pyc
 *.sqlite
+*.pem
