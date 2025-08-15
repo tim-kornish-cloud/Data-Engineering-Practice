@@ -472,7 +472,7 @@ class Custom_MSSQL_Utilities:
         sql_update = """ example:
         UPDATE <table_name>
         SET <column_name> = <value, corresponding column value>
-        WHERE <Where_column_name> = <correspondin conditional value>;"""
+        WHERE <Where_column_name> in < list of corresponding conditional value>;"""
         # loop through df column to generate a list of values to
         # set as valid for deletion
         value_to_update = [tuple(x) for x in df.values]
@@ -776,6 +776,18 @@ class Custom_Utilities:
         return pd.merge(left=left, right=right,
                         how=how, left_on=left_on, right_on=right_on,
                         suffixes=suffixes, indicator=indicator, validate=validate)
+
+    def get_df_diffs(self, left, right, left_on, right_on, how ='inner',
+                  suffixes = ('_left', '_right'), indicator = True, validate = None):
+        merged_df = self.merge_dfs(left=left, right=right,
+                        how=how, left_on=left_on, right_on=right_on,
+                        suffixes=suffixes, indicator=indicator, validate=validate)
+        both_df = merged_df[merged_df["indicator"] == "both"]
+        print(both_df.head())
+        print(both_df.columns)
+        left_only_df = merged_df[merged_df["indicator"] == "left"]
+        right_only_df = merged_df[merged_df["indicator"] == "right"]
+        return (both_df, left_only_df, right_only_df)
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
         """
