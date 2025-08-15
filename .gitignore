@@ -1,6 +1,6 @@
 credentials.properties
 credentials.py
-*.tf
+
 *.properties
 *.txt
 *.vsidx
