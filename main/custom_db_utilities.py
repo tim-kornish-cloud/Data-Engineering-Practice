@@ -110,6 +110,7 @@ class Custom_SF_Utilities:
         """
         Description: intermediary function to load SOQL query
                      that has lookup fields, requires more processing time.
+                     By default auto sends to the flatten_lookup_fieldname_hierarchy function, can add parameter to assume no lookups in query
         Parameters:
 
         query_results - OrderedDict, JSON formatted records
@@ -120,7 +121,7 @@ class Custom_SF_Utilities:
         # has log to detect if query uses lookups or not
         return Utilities.load_query_with_lookups_into_DataFrame(self, query_results)
 
-    def un_nest_lookups(self, df, continue_loop = False, use_subset = True, subset_size = 1000):
+    def flatten_lookup_fieldname_hierarchy(self, df, continue_loop = False, use_subset = True, subset_size = 1000):
         """
         Description: Process dataframe created from results of Salesforce Query
                      loop through all the columns of the dataframe and
@@ -178,7 +179,7 @@ class Custom_SF_Utilities:
         if continue_loop:
             # recursive loop back again.
             # note the continue loop parameter is reset to false by defulat when not included
-            return self.un_nest_lookups(df)
+            return self.flatten_lookup_fieldname_hierarchy(df)
         # no more nested columns found to unnest, function is complete, return dataframe
         else:
             # return results of query with every columns properly separated.
@@ -206,7 +207,7 @@ class Custom_SF_Utilities:
         # log to console
         log.info('[Unnesting columns for DF with: ' + str(len(df)) + ' records]')
         # unnest lookup fields from query onto a flat array and return as a dataframe
-        df = self.un_nest_lookups(df, use_subset = use_subset, subset_size = subset_size)
+        df = self.flatten_lookup_fieldname_hierarchy(df, use_subset = use_subset, subset_size = subset_size)
         # where a notnull NaN value is found, replace with None
         df = df.where((pd.notnull(df)), None)
         # log status of unnesting lookups into a new dataframe
@@ -214,7 +215,7 @@ class Custom_SF_Utilities:
         # return the query results as a pandas dataframe
         return df
 
-    def reformat_df_to_SF_records(self, df):
+    def reformat_dataframe_to_salesforce_records(self, df):
         """
         Description: Reformat df into list of dicts where each dict is a SF record
         Parameters:
@@ -230,7 +231,7 @@ class Custom_SF_Utilities:
         #return the records in salesforce format
         return sf_records
 
-    def upload_records_to_salesforce(self, sf, df, object_name, dml_operation, success_file = None, fallout_file = None, batch_size = 1000, external_id_field=None, time_delay = None):
+    def upload_dataframe_to_salesforce(self, sf, df, object_name, dml_operation, success_file = None, fallout_file = None, batch_size = 1000, external_id_field=None, time_delay = None):
         """
         Description: upload dataframe of records to salesforce with dml operation.
                      This function includes pre processing of dataframe to json for
@@ -261,7 +262,7 @@ class Custom_SF_Utilities:
         # quick check that we're not attempting to load 0 records, quit out immediately if so
         if len(df) != 0:
             # reformat the records from a pandas dataframe to JSON in salesforce compatibale format
-            records_to_commit = self.reformat_df_to_SF_records(df)
+            records_to_commit = self.reformat_dataframe_to_salesforce_records(df)
             # record how many records are going to be attempted
             records_count = len(records_to_commit)
             # log to console status
