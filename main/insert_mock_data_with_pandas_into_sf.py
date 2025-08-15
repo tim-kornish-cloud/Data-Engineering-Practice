@@ -65,4 +65,4 @@ mock_df = pd.read_csv(input_csv_file)
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, df_to_upload, 'Account', 'insert', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert', success_file, fallout_file)

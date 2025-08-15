@@ -60,4 +60,4 @@ accounts_to_delete_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_
 accounts_to_delete_df = Utils.encode_df(accounts_to_delete_df)
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, accounts_to_delete_df, 'Account', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_delete_df, 'Account', 'delete', success_file, fallout_file)

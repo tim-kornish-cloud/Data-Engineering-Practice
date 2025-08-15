@@ -89,4 +89,4 @@ accounts_to_update_df["Industry"] = "Government"
 accounts_to_update_df = accounts_to_update_df[["Id", "Type", "Industry", ]]
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, accounts_to_update_df, 'Account', 'update', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_update_df, 'Account', 'update', success_file, fallout_file)

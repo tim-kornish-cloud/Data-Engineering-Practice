@@ -74,4 +74,4 @@ df_to_upsert["Industry"] = "Government"
 print(df_to_upsert.head(10))
 
 # upload the records to salesforce
-SF_Utils.upload_records_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file, batch_size = 1000, external_id_field = 'Account_Number_External_ID__c')
+SF_Utils.upload_dataframe_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file, batch_size = 1000, external_id_field = 'Account_Number_External_ID__c')
