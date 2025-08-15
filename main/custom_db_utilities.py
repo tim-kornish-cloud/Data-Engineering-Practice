@@ -525,9 +525,9 @@ class Custom_MySQL_Utilities:
         #attempt to connect
         try:
             cursor_connection = mysql.connector.connect(
-                host=server#"localhost",  - Or the IP address/hostname of your MySQL server
-                user=username#"your_username",
-                password=password#"your_password",
+                host=server,#"localhost",  - Or the IP address/hostname of your MySQL server
+                user=username,#"your_username",
+                password=password,#"your_password",
                 database=database#"your_database_name" - Optional: specify a database to connect to directly
             )
             log.info("[Connected to MySQL database successfully!]")
@@ -541,13 +541,13 @@ class Custom_MySQL_Utilities:
                 log.info(err)
 
         if 'cursor_connection' in locals() and cnx.is_connected(): # Check if connection was successful
-        cursor = cursor_connection.cursor()
-        #convert the instance to a cursor
-        cursor = cursor_connection.cursor()
-        # log to console the cursor is created
-        log.info('[Creating Cursor]')
-        #return the connection and cursor to use to query against the database
-        return (cursor_connection, cursor)
+            cursor = cursor_connection.cursor()
+            #convert the instance to a cursor
+            cursor = cursor_connection.cursor()
+            # log to console the cursor is created
+            log.info('[Creating Cursor]')
+            #return the connection and cursor to use to query against the database
+            return (cursor_connection, cursor)
 
     def query_MySQL_return_DataFrame(self, query, cursor):
         """
@@ -568,9 +568,9 @@ class Custom_MySQL_Utilities:
         cursor.execute(query)
         results = cursor.fetchall()
         if 'cursor_connection' in locals() and cursor_connection.is_connected():
-        cursor.close() # Close the cursor first if it was created
-        cursor_connection.close()
-        log.info("MySQL connection closed.")
+            cursor.close() # Close the cursor first if it was created
+            cursor_connection.close()
+            log.info("MySQL connection closed.")
 
         """this below is still mssql code, need to verify"""
         # convert the results into a list of columns
@@ -716,11 +716,10 @@ class S3_Utilities:
             log.info(f"Error downloading file: {e}")
 
     def view_s3_content(self, s3, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/text_file.txt'):
-            """Description: # Define your bucket name, object key (file path in S3), and local file path
-            Parameters:
-
-            Return:
-            """
+        """Description: # Define your bucket name, object key (file path in S3), and local file path
+        Parameters:
+        Return:
+        """
         try:
             response = s3.get_object(Bucket=bucket_name, Key=object_key)
             object_content = response['Body'].read().decode('utf-8') # Decode for text files

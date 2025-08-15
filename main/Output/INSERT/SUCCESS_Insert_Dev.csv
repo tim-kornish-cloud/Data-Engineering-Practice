@@ -1,11 +1,1 @@
 AccountNumber,Name,NumberOfEmployees,NumberofLocations__c,Phone,SLA__c,SLASerialNumber__c,Account_Number_External_ID__c,RESULTS_success,RESULTS_created,RESULTS_id,RESULTS_errors
-1,Giorgio,95,43,767-695-2388,Gold,111920516,978151df-ec7b-4e3b-8109-02a139ddb7f0,True,True,001gL00000GycHJQAZ,[]
-2,Germayne,38,26,569-827-8112,Gold,122105744,03441cbe-21aa-442b-9fdf-315f6a102159,True,True,001gL00000GycHKQAZ,[]
-3,Cathee,40,78,821-934-1695,Platinum,31300575,71f94f0d-0d28-49ad-bff5-28ee106f798f,True,True,001gL00000GycHLQAZ,[]
-4,Xavier,92,20,833-280-1399,Bronze,71922340,eb360d1d-cc9f-491f-baa1-1677f4cd165d,True,True,001gL00000GycHMQAZ,[]
-5,Ray,32,48,829-486-1183,Silver,86518765,3bf7b6a2-111e-42ff-b3c0-4d77dd6a2a29,True,True,001gL00000GycHNQAZ,[]
-6,Gallard,1,86,671-589-1682,Gold,101205681,d3eacd9a-7135-412a-a8a1-006029c0acaf,True,True,001gL00000GycHOQAZ,[]
-7,Mattias,24,32,242-157-8816,Platinum,101902298,bc042ccf-43ed-4845-a47b-e981ff2521ea,True,True,001gL00000GycHPQAZ,[]
-8,Malinda,6,5,156-747-9499,Silver,11100012,34184c18-36c9-4fb4-9f67-c3dae9adaed0,True,True,001gL00000GycHQQAZ,[]
-9,Boigie,19,100,136-168-9704,Bronze,323271493,0c6a7f82-26a0-4be3-a51a-b0e6587304a3,True,True,001gL00000GycHRQAZ,[]
-10,Bret,96,3,394-928-2789,Platinum,83902196,53c773bc-f732-4107-97de-beb4193391fe,True,True,001gL00000GycHSQAZ,[]
