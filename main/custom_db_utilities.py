@@ -779,15 +779,57 @@ class Custom_Utilities:
 
     def get_df_diffs(self, left, right, left_on, right_on, how ='inner',
                   suffixes = ('_left', '_right'), indicator = True, validate = None):
+        """
+        Description: merge two dataframes based on list of columns to join on,
+                     then return a tuple of 3 dataframes, 1 where records exist in both left and right,
+                     1 for left only and 1 for right only
+        Parameters:
+
+        left                - left dataframe
+        right               - right dataframe
+        left_on             - list of string column names to perform merge on
+        right_on            - list of string column names to perform merge on
+        how='inner'         - what type of join to use for the merge, inner reduces duplicate the best
+        suffixes            - tuple of string to append to the end of columns from each dataframe
+        indicator           - indicate left/right/both dataframe the row is found in
+        validate            - can check for 1:1/1:many/many:1/many:many merges
+
+        Return: tuple of three dataframes
+        """
         merged_df = self.merge_dfs(left=left, right=right,
                         how=how, left_on=left_on, right_on=right_on,
                         suffixes=suffixes, indicator=indicator, validate=validate)
-        both_df = merged_df[merged_df["indicator"] == "both"]
-        print(both_df.head())
-        print(both_df.columns)
-        left_only_df = merged_df[merged_df["indicator"] == "left"]
-        right_only_df = merged_df[merged_df["indicator"] == "right"]
+        both_df = merged_df[merged_df["_merge"] == "both"]
+
+        left_only_df = merged_df[merged_df["_merge"] == "left_only"]
+        right_only_df = merged_df[merged_df["_merge"] == "right_only"]
         return (both_df, left_only_df, right_only_df)
+
+    def format_columns_dtypes(self, df):
+        for index, col in enumerate(df.columns):
+            print(col)
+            print(df[col].dtypes)
+            if index < len(df.columns):
+                #check if type == int
+                if df[col].dtypes == 'int64':
+                    print("int")
+                    df[col] = df[col].astype(int)
+                #check if type == string, date, or object
+                if df[col].dtypes == 'object':
+                    print("object")
+                    df[col] = df[col].astype(str)
+                #check if type == float
+                if df[col].dtypes == 'float64':
+                    print("float")
+                    df[col] = df[col].astype(float)
+                #check if type == boolean
+                if df[col].dtypes == 'bool':
+                    print("bool")
+                    df[col] = df[col].astype(bool)
+            print(col)
+            print(df[col].dtypes)
+            print("\n--------\n")
+        return df
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
         """
