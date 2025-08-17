@@ -458,26 +458,49 @@ class Custom_MSSQL_Utilities:
             # close the connection
             connection.close()
 
-    def update_rows_in_MSSQL_table(self, df, table_name, id_column_name):
-        """Description
-           Parameters
+    def update_rows_in_MSSQL_table(self, df, table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+        """Description: update multiples columns in MSSQL table from a dataframe on a where in list condition
 
-           df,
-           table_name,
-           id_column_name
+            sql_update =  example:
+            UPDATE <table_name>
+            SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
+            WHERE <Where_column_name> in < list of corresponding conditional value>;
+
+           Parameters:
+
+           df                       - Dataframe of records to update
+           table_name               - table in MSSQL to update
+           columns_to_update        - column names in MSSQL table to update
+           column_values_to_update  - column values to upload into MSSQL table
+           where_column_name        - single field, condition for update
+           where_column_list        - list of accepted values for where condition
 
            Return: None - delete records
         """
-        # Example with parameterization
-        sql_update = """ example:
-        UPDATE <table_name>
-        SET <column_name> = <value, corresponding column value>
-        WHERE <Where_column_name> in < list of corresponding conditional value>;"""
+        #
+        log.info('[Creating Update SQL statement...]')
+        #
+        sql_update = "UPDATE " + table_name + " SET "
+        #
+        for index, col in enumerate(columns_to_update):
+            #
+            if index < len(columns_to_update) - 1:
+                #
+                sql_update = sql_update + col + " = " + column_values_to_update[index] + ", "
+            #
+            if index == len(columns_to_update) - 1:
+                #
+                sql_update = sql_update + col + " = " + column_values_to_update[index] + " "
+        #
+        sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
+
         # loop through df column to generate a list of values to
         # set as valid for deletion
         value_to_update = [tuple(x) for x in df.values]
         #execute the deletion of records
         cursor.execute(sql_update, value_to_update)
+        #log to console commiting update to table now
+        log.info('[Commiting update to MSSQL table...]')
         # commit the sql statement
         connection.commit()
 
