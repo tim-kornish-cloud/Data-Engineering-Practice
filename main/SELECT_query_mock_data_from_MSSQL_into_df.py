@@ -64,21 +64,12 @@ select_query = """SELECT TOP (1000) [AccountNumber]
 
 #accounts in the mssql table shown in the query above
 account_df = MSSQL_Utils.query_MSSQL_return_DataFrame(select_query, cursor)
-#print(account_df.head())
-#print(mock_data_df.head())
-
-#print(account_df.shape)
-#print(mock_data_df.shape)
-
-#print(account_df.dtypes)
-#print(mock_data_df.dtypes)
 
 account_df.columns = account_df.columns.str.strip()
 mock_data_df.columns = mock_data_df.columns.str.strip()
 
 mock_data_df = Utils.format_columns_dtypes(mock_data_df)
 account_df = Utils.format_columns_dtypes(account_df)
-
 
 print(account_df.columns)
 print(mock_data_df.columns)
@@ -88,16 +79,7 @@ mock_data_df['SLASerialNumber__c'] = mock_data_df['SLASerialNumber__c'].astype(i
 
 merged_df = Utils.merge_dfs(account_df, mock_data_df, left_on = 'SLASerialNumber__c', right_on = 'SLASerialNumber__c', how = 'outer', suffixes = ('_left', '_right'), indicator = True, validate = None)
 
-
 both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, mock_data_df, left_on = 'SLASerialNumber__c', right_on = 'SLASerialNumber__c', how = 'outer', suffixes = ('_left', '_right'), indicator = True, validate = None)
 print(both_df.head(100))
 print(left_only_df.head(100))
 print(right_only_df.head(100))
-
-# list of data types to convert the df columns to fit MSSQL
-# need to find a way to parse the df.columns and generate this automatically
-# this is a temporaray bandaid being hardcoded
-column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
-
-#insert subset of the csv  from a dataframe into the mssql table
-#MSSQL_Utils.insert_dataframe_into_MSSQL_table(connection, cursor, df_to_upload, 'Accounts_test_1', column_types)
