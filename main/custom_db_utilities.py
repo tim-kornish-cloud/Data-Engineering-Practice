@@ -806,9 +806,19 @@ class Custom_Utilities:
         return (both_df, left_only_df, right_only_df)
 
     def format_columns_dtypes(self, df):
+        """
+        Description: reformat dataframe columns before merge,
+                     needs merge columns to be of same type,
+                     honestly better to just update the data type
+                     of the merging columns hardcoded instead of every column
+        Parameters:
+
+        df              - dataframe to reformat column datatypes
+
+        Return: dataframe
+        """
+        log.info('[updating datatypes of dataframe...]')
         for index, col in enumerate(df.columns):
-            print(col)
-            print(df[col].dtypes)
             if index < len(df.columns):
                 #check if type == int
                 if df[col].dtypes == 'int64':
@@ -826,9 +836,7 @@ class Custom_Utilities:
                 if df[col].dtypes == 'bool':
                     print("bool")
                     df[col] = df[col].astype(bool)
-            print(col)
-            print(df[col].dtypes)
-            print("\n--------\n")
+
         return df
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
