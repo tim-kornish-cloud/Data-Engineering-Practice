@@ -90,9 +90,6 @@ table_to_update = '[Data_Engineering].[dbo].[Accounts_test_1]'
 #table key field
 table_UID = 'Account_Number_External_ID__c'
 
-# gerenate sql list of accounts to fit into the where clause of an update
-accounts_list = both_df['Account_Number_External_ID__c'].astype(str).tolist()
-
 # below is a sql list as a single string
 accounts_to_update_list = Utils.generate_sql_list_from_df_column(both_df, 'Account_Number_External_ID__c', output = 'string')
 
