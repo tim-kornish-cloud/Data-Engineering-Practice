@@ -542,8 +542,8 @@ class Custom_MySQL_Utilities:
         driver          - SQL Server Driver use {SQL Driver} or DRIVER={MySQL ODBC 8.0 Unicode Driver}
         server          - IP address of server, I.E. 127.0.0.1
         database        - Database name
-        Username        - string, salesforce Username
-        Password        - string, salesforce Password
+        Username        - string, mysql Username
+        Password        - string, mysql Password
 
         Return: MySQL engine
         """
@@ -554,14 +554,14 @@ class Custom_MySQL_Utilities:
         # return engine to perform operations with
         return engine
 
-    def query_MySQL_return_DataFrame(self, query, connection):
+    def query_MySQL_return_DataFrame(self, query, engine):
         """
         Description: query a MySQL server with a logged in cursor and
         process results into a pandas dataframe the return the dataframe.
         Parameters:
 
         query              - query string
-        connection         - cursor creating upon login to execute the query
+        engine             - engine used to query database and load results into dataframe
 
         Return: pandas.DataFrame
         """
@@ -569,26 +569,30 @@ class Custom_MySQL_Utilities:
         # log to console beginning query against mssql database
         log.info('[Querying MS SQL DB...]')
         # read query into dataframe
-        df = pd.read_sql(query, connection)
+        df = pd.read_sql(query, engine)
         # return the dataframe of results from the MySQL table
         return df
 
-    def insert_dataframe_into_MySQL_table(self, connection, df, tablename, index = False, if_exists = 'fail'):
-        """Description:
+    def insert_dataframe_into_MySQL_table(self, engine, df, tablename, index = False, if_exists = 'fail'):
+        """Description: attempt to insert an entire dataframe into a MySQL table
         Parameters:
 
-        connection
-        df
-        tablename
-        index
-        if_exists
+        engine          - database engine
+        df              - dataframe to insert into the MySQL table
+        tablename       - table to insert records into
+        index           - attempt to convert the index into a column to use on the insert, default to false
+        if_exists       - {‘fail’, ‘replace’, ‘append’} default to 'append'
+                            How to behave if the table already exists.
+                            fail: Raise a ValueError.
+                            replace: Drop the table before inserting new values.
+                            append: Insert new values to the existing table
 
-        return: none - insert records into mssql # DEBUG:
-        Current issue 8/11/25:
+        return: none - insert records into mysql
         """
         # if the df column list matches the table, use all columns
         log.info('[Uploading Dataframe to MySQL DB Table...]')
-        df.to_sql(name = tablename, con = connection, index = index, if_exists = if_exists)
+        #upload records directly from dataframe using to_sql function
+        df.to_sql(name = tablename, con = engine, index = index, if_exists = if_exists)
 
     def update_rows_in_MySQL_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
@@ -625,6 +629,7 @@ class Custom_MySQL_Utilities:
                 sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
         # add where clause to end of sql string
         sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
+
         #create connection to execute query from engine
         with engine.connect() as connection:
             #set safe mode off before update
@@ -641,13 +646,12 @@ class Custom_MySQL_Utilities:
         log.info('[Commiting update to MySQL table...]')
 
     def delete_rows_in_MySQL_table(self, engine,  table_name, column_name, record_list):
-        """Description: generate a query string to delete records from a MSSQL table
+        """Description: generate a query string to delete records from a MySQL table
            Parameters:
 
-           connection               - MSSQL login connection
-           cursor                   - MSSQL connection cursor
-           table_name               - table in MSSQL to update
-           columns_name             - column name in MSSQL table with key used to delete
+           engine                   - MySQL login connection
+           table_name               - table in MySQL to update
+           columns_name             - column name in MySQL table with key used to delete
            record_list              - list of key IDs to delete records
 
            Return: None - delete records
@@ -655,6 +659,7 @@ class Custom_MySQL_Utilities:
         # Example with parameterization
         sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
 
+        # open connection and submit the delete query
         with engine.connect() as connection:
             #set safe mode off before update
             connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
