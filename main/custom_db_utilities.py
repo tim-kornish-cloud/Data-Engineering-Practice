@@ -468,7 +468,6 @@ class Custom_MSSQL_Utilities:
         UPDATE <table_name>
         SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
         WHERE <Where_column_name> in < list of corresponding conditional value>;
-
         Parameters:
 
         connection               - MSSQL login connection
@@ -504,19 +503,20 @@ class Custom_MSSQL_Utilities:
         # commit the sql statement
         connection.commit()
 
-    def delete_rows_in_MSSQL_table(self, df, value_to_delete, table_name, column_name):
-        """Description
-           Parameters
+    def delete_rows_in_MSSQL_table(self, connection, cursor, table_name, column_name, record_list):
+        """Description: generate a query string to delete records from a MSSQL table
+           Parameters:
 
-           df
-           value_to_delete - name of column in dataframe to delete data from the corresponding mssql table
-           table_name
-           column_name
+           connection               - MSSQL login connection
+           cursor                   - MSSQL connection cursor
+           table_name               - table in MSSQL to update
+           columns_name             - column name in MSSQL table with key used to delete
+           record_list              - list of key IDs to delete records
 
            Return: None - delete records
         """
         # Example with parameterization
-        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " = ?"
+        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
 
         #execute the deletion of records
         cursor.execute(sql_delete)
