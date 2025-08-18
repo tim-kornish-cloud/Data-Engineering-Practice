@@ -22,7 +22,7 @@ Cred = Credentials()
 environment = 'localhost'
 
 #number of records to attempted
-num_of_records = 10
+num_of_records = 100
 
 #starting index to choose records
 record_start = 80
