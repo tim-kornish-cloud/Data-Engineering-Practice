@@ -7,21 +7,28 @@ Description: A backend utility file for logging into Salesforce,
              of execution start and end results.
 
 """
-
+#util libraries
 from ctypes import util
-import numpy as np
-import pandas as pd
-from simple_salesforce import Salesforce
-import pyodbc
-import mysql.connector
-import boto3
-import awswrangler as wr
 from datetime import datetime
 from collections import OrderedDict
 import time
-
 import logging as log
 import coloredlogs
+#pandas and numpy
+import numpy as np
+import pandas as pd
+#salesforce connector
+from simple_salesforce import Salesforce
+#MSSQL connector
+import pyodbc
+#AWS S3 EC2 connector
+import boto3
+import awswrangler as wr
+#mysql connector
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
+import pymysql
+import mysql.connector
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
@@ -458,9 +465,7 @@ class Custom_MSSQL_Utilities:
             # close the connection
             connection.close()
 
-    def update_rows_in_MSSQL_table(self, connection, cursor,  table_name,
-                                  columns_to_update, column_values_to_update,
-                                  where_column_name, where_column_list):
+    def update_rows_in_MSSQL_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
         Description: update multiples columns in MSSQL table from a dataframe on a where in list condition
 
@@ -529,195 +534,153 @@ class Custom_MySQL_Utilities:
            - currently no customization used.
         """
 
-    def login_to_MySQL(self,  server = None, database = '', username = None,
-                      password = None, use_windows_authentication = True,
-                      driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
+    def login_to_MySQL(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = '', username = None, password = None, ssl_disabled=True):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
 
-        driver          - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
+        driver          - SQL Server Driver use {SQL Driver} or DRIVER={MySQL ODBC 8.0 Unicode Driver}
         server          - IP address of server, I.E. 127.0.0.1
         database        - Database name
         Username        - string, salesforce Username
         Password        - string, salesforce Password
 
-        Return: cursor
+        Return: MySQL engine
         """
-        #attempt to connect
-        try:
-            cursor_connection = mysql.connector.connect(
-                host=server,#"localhost",  - Or the IP address/hostname of your MySQL server
-                user=username,#"your_username",
-                password=password,#"your_password",
-                database=database#"your_database_name" - Optional: specify a database to connect to directly
-            )
-            log.info("[Connected to MySQL database successfully!]")
+        #log to console engine is created
+        log.info('[MySQL engine connected...]')
+        # create engine to connect to MySQL
+        engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
+        # return engine to perform operations with
+        return engine
 
-        except mysql.connector.Error as err:
-            if err.errno == mysql.connector.errorcode.ER_ACCESS_DENIED_ERROR:
-                log.info("Something is wrong with your user name or password")
-            if err.errno == mysql.connector.errorcode.ER_BAD_DB_ERROR:
-                log.info("Database does not exist")
-            else:
-                log.info(err)
-
-        if 'cursor_connection' in locals() and cnx.is_connected(): # Check if connection was successful
-            cursor = cursor_connection.cursor()
-            #convert the instance to a cursor
-            cursor = cursor_connection.cursor()
-            # log to console the cursor is created
-            log.info('[Creating Cursor]')
-            #return the connection and cursor to use to query against the database
-            return (cursor_connection, cursor)
-
-    def query_MySQL_return_DataFrame(self, query, cursor):
+    def query_MySQL_return_DataFrame(self, query, connection):
         """
-        Description: query a MSSQL server with a logged in cursor and
+        Description: query a MySQL server with a logged in cursor and
         process results into a pandas dataframe the return the dataframe.
         Parameters:
 
-        query           - query string
-        cursor          - cursor creating upon login to execute the query
+        query              - query string
+        connection         - cursor creating upon login to execute the query
 
         Return: pandas.DataFrame
         """
 
-        # For example: cursor.execute("SELECT * FROM your_table")
-        # results = cursor.fetchall()
         # log to console beginning query against mssql database
         log.info('[Querying MS SQL DB...]')
-        cursor.execute(query)
-        results = cursor.fetchall()
-        if 'cursor_connection' in locals() and cursor_connection.is_connected():
-            cursor.close() # Close the cursor first if it was created
-            cursor_connection.close()
-            log.info("MySQL connection closed.")
+        # read query into dataframe
+        df = pd.read_sql(query, connection)
+        # return the dataframe of results from the MySQL table
+        return df
 
-        """this below is still mssql code, need to verify"""
-        # convert the results into a list of columns
-        columns = [column[0] for column in cursor.description]
-        # log to console status of querying records
-        log.info('[Condensing results into Dict...]')
-        # convert the columns and rows of data into a list of dicts
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        # log to console status of querying records
-        log.info('[transforming Dict into DataFrame...]')
-        # convert the list of dicts into a pandas dataframe
-        results_df = pd.DataFrame(results)
-        # log to console status of querying records
-        log.info('[loaded ' + str(len(results_df)) + ' records into DataFrame]')
-        # return the results of the query as a pandas data frame
-        return results_df
-
-    def insert_dataframe_into_MySQL_table(self, connection, cursor, df, tablename, column_types = [], cols = '', use_all_columns_in_df = True, close_connection = True):
+    def insert_dataframe_into_MySQL_table(self, connection, df, tablename, index = False, if_exists = 'fail'):
         """Description:
         Parameters:
 
         connection
-        cursor
         df
         tablename
-        column_types
-        cols
-        use_all_columns_in_df
-        close_connection
+        index
+        if_exists
 
         return: none - insert records into mssql # DEBUG:
         Current issue 8/11/25:
-        # current method causes warning with chained indexing instead of using .loc or .iloc
-        # error is just making a getattr call twice instead of once and some other things that improve speed but not a breaking issue
-        # will update to .loc/.iloc at a later point, just need a working function for now
-
         """
         # if the df column list matches the table, use all columns
-        if use_all_columns_in_df:
-            # generate a list of all columns
-            cols = ','.join([k for k in df.dtypes.index])
-        # generate a list of '?' to be replaced by the actual values of the dataframe
-        params = ','.join('?' * len(df.columns))
-        # generate the sql commit with the dataframe
-        sql = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(tablename, cols, params)
+        log.info('[Uploading Dataframe to MySQL DB Table...]')
+        df.to_sql(name = tablename, con = connection, index = index, if_exists = if_exists)
 
-        #for loop only works when provided a list of column converted types
-        log.info('[Converting data types in DataFrame...]')
-        #loop through each column to convert the type every value
-        for index, col in enumerate(df.columns):
-            #confirm the index is still within range of acceptable indexes
-            if index < len(column_types):
-                #check if type == int
-                if column_types[index] == 'int':
-                    df[col] = df[col].astype(int)
-                #check if type == string
-                if column_types[index] == 'str':
-                    df[col] = df[col].astype(str)
-                #check if type == float
-                if column_types[index] == 'float':
-                    df[col] = df[col].astype(float)
-                #check if type == boolean
-                if column_types[index] == 'bool':
-                    df[col] = df[col].astype(bool)
-        #convert the rows in the dataframe into tuples
-        data = [tuple(x) for x in df.values]
-        #set the bulk insert for pyodbc cursor.fast_executemany = True
-        cursor.fast_executemany = True
-        #execute insert of records
-        cursor.executemany(sql, data)
-        # commit the sql statement
-        connection.commit()
-        # close the connection if desired
-        if close_connection:
-            # close the connection
-            connection.close()
-
-    def update_rows_in_MySQL_table(self, df, table_name, id_column_name):
-        """Description
-           Parameters
-
-           df,
-           table_name,
-           id_column_name
-
-           Return: None - delete records
+    def update_rows_in_MySQL_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
-        # Example with parameterization
-        sql_update = """ example:
+        Description: update multiples columns in MySQL table from a dataframe on a where in list condition
+
+        sql_update =  example:
         UPDATE <table_name>
-        SET <column_name> = <value, corresponding column value>
-        WHERE <Where_column_name> = <correspondin conditional value>;"""
-        # loop through df column to generate a list of values to
-        # set as valid for deletion
-        value_to_update = [tuple(x) for x in df.values]
-        #execute the deletion of records
-        cursor.execute(sql_update, value_to_update)
-        # commit the sql statement
-        connection.commit()
+        SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
+        WHERE <Where_column_name> in < list of corresponding conditional value>;
+        Parameters:
 
-    def delete_rows_in_MySQL_table(self, df, value_to_delete, table_name, column_name):
-        """Description
-           Parameters
+        engine                   - MySQL engine engine
+        table_name               - table in MySQL to update
+        columns_to_update        - column names in MySQL table to update
+        column_values_to_update  - column values to upload into MySQL table
+        where_column_name        - single field, condition for update
+        where_column_list        - list of accepted values for where condition
 
-           df
-           value_to_delete - name of column in dataframe to delete data from the corresponding mssql table
-           table_name
-           column_name
+        Return: None - delete records
+        """
+        # log to console, creating update statement to upload
+        log.info('[Creating Update SQL statement...]')
+        # create beginning of update, add table name
+        sql_update = "UPDATE " + table_name + " SET "
+        # add column names and column values to set in the update
+        for index, col in enumerate(columns_to_update):
+            #make sure to not grab a value outside of range and not the last row
+            if index < len(columns_to_update) - 1:
+                # for all lines except the last row, add column name, value, and comma
+                sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
+            # adding string to sql_update for last row to update
+            if index == len(columns_to_update) - 1:
+                # for last row, add column name and value without a comma
+                sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
+        # add where clause to end of sql string
+        sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
+        #create connection to execute query from engine
+        with engine.connect() as connection:
+            #set safe mode off before update
+            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
+            connection.commit()
+            #execute the update of records
+            connection.execute(text(sql_update))
+            # commit the sql statement
+            connection.commit()
+            #set safe mode back on
+            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
+            connection.commit()
+        #log to console commiting update to table now
+        log.info('[Commiting update to MySQL table...]')
+
+    def delete_rows_in_MySQL_table(self, engine,  table_name, column_name, record_list):
+        """Description: generate a query string to delete records from a MSSQL table
+           Parameters:
+
+           connection               - MSSQL login connection
+           cursor                   - MSSQL connection cursor
+           table_name               - table in MSSQL to update
+           columns_name             - column name in MSSQL table with key used to delete
+           record_list              - list of key IDs to delete records
 
            Return: None - delete records
         """
         # Example with parameterization
-        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " = ?"
-        # loop through df column to generate a list of values to
-        # set as valid for deletion
-        value_to_delete = [tuple(x) for x in df.values]
-        #execute the deletion of records
-        cursor.execute(sql_delete, value_to_delete)
-        # commit the sql statement
-        connection.commit()
+        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
 
-class S3_Utilities:
+        with engine.connect() as connection:
+            #set safe mode off before update
+            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
+            connection.commit()
+            #execute the update of records
+            connection.execute(text(sql_delete))
+            # commit the sql statement
+            connection.commit()
+            #set safe mode back on
+            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
+            connection.commit()
+        #log to console commiting update to table now
+        log.info('[Commiting delete to MySQL table...]')
+
+class CS3_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
+
+           # Alternatively, using awswrangler for more robust S3 integration
+           # try:
+           #     df_wr = wr.s3.read_csv(path=f"s3://your-s3-bucket-name/path/to/your/data.csv")
+           #     print("DataFrame from S3 (using awswrangler):")
+           #     print(df_wr.head())
+           # except Exception as e:
+           #     print(f"Error reading CSV from S3 with awswrangler: {e}")
         """
 
     def create_s3_client(self, s3 = 's3'):
@@ -759,14 +722,6 @@ class S3_Utilities:
         except Exception as e:
             log.info(f"Error reading CSV from S3: {e}")
         return df
-
-# Alternatively, using awswrangler for more robust S3 integration
-# try:
-#     df_wr = wr.s3.read_csv(path=f"s3://your-s3-bucket-name/path/to/your/data.csv")
-#     print("DataFrame from S3 (using awswrangler):")
-#     print(df_wr.head())
-# except Exception as e:
-#     print(f"Error reading CSV from S3 with awswrangler: {e}")
 
 class Custom_Utilities:
     def __init__(self):
