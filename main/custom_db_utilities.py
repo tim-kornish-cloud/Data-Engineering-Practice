@@ -36,7 +36,7 @@ coloredlogs.install()
 # currently only using info debug level comments
 log.basicConfig(level = log.DEBUG)
 
-class Custom_SF_Utilities:
+class SF_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
@@ -333,7 +333,7 @@ class Custom_SF_Utilities:
             #log to console, nothing included in dataframe to process
             log.info('[No Records to process]')
 
-class Custom_MSSQL_Utilities:
+class MSSQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
@@ -528,7 +528,7 @@ class Custom_MSSQL_Utilities:
         # commit the sql statement
         connection.commit()
 
-class Custom_MySQL_Utilities:
+class MySQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.

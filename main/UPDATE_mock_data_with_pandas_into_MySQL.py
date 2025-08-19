@@ -9,7 +9,7 @@ Description: Load a csv of mock data into a pandas dataframe.
 import numpy as np
 import pandas as pd
 import os
-from custom_db_utilities import  Custom_MySQL_Utilities, Custom_Utilities
+from custom_db_utilities import  MySQL_Utilities, Custom_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
