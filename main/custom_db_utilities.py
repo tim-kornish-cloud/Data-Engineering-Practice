@@ -674,7 +674,7 @@ class MySQL_Utilities:
         #log to console commiting update to table now
         log.info('[Commiting delete to MySQL table...]')
 
-class CS3_Utilities:
+class EC2_S3_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
