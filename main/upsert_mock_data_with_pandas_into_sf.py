@@ -10,11 +10,11 @@ import numpy as np
 import pandas as pd
 import os
 from simple_salesforce import Salesforce
-from custom_db_utilities import  SF_Utilities, Custom_Utilities
+from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = Custom_SF_Utilities()
+SF_Utils = SalesForce_Utilities()
 #create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
@@ -68,10 +68,9 @@ df_to_upload = mock_df.iloc[record_start:record_start+num_of_records, :]
 df_to_upsert = mock_df.iloc[record_start:record_start+num_of_records, :]
 
 #add new column called type and set all accounts to government
-df_to_upsert["Type"] = "Prospect"
+df_to_upsert.loc[:,"Type"] = "Prospect"
 #add new column called type and set all accounts to government
-df_to_upsert["Industry"] = "Government"
-print(df_to_upsert.head(10))
+df_to_upsert.loc[:,"Industry"] = "Government"
 
 # upload the records to salesforce
 SF_Utils.upload_dataframe_to_salesforce(sf, df_to_upsert, 'Account', 'upsert', success_file, fallout_file, batch_size = 1000, external_id_field = 'Account_Number_External_ID__c')

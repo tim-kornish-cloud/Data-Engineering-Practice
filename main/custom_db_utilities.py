@@ -36,7 +36,7 @@ coloredlogs.install()
 # currently only using info debug level comments
 log.basicConfig(level = log.DEBUG)
 
-class SF_Utilities:
+class SalesForce_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
@@ -115,7 +115,7 @@ class SF_Utilities:
         # return the reformatted dataframe
         return return_df
 
-    def load_query_into_DataFrame(self, query_results):
+    def load_query_into_dataframe(self, query_results):
         """
         Description: intermediary function to load SOQL query
                      that has lookup fields, requires more processing time.
@@ -128,7 +128,7 @@ class SF_Utilities:
         """
         # use function to process query since it
         # has log to detect if query uses lookups or not
-        return Utilities.load_query_with_lookups_into_DataFrame(self, query_results)
+        return Utilities.load_query_with_lookups_into_dataframe(self, query_results)
 
     def flatten_lookup_fieldname_hierarchy(self, df, continue_loop = False, use_subset = True, subset_size = 1000):
         """
@@ -194,7 +194,7 @@ class SF_Utilities:
             # return results of query with every columns properly separated.
             return df
 
-    def load_query_with_lookups_into_DataFrame(self, query_results, use_subset = True, subset_size = 1000):
+    def load_query_with_lookups_into_dataframe(self, query_results, use_subset = True, subset_size = 1000):
         """
         Description: Load SOQL query that has lookup fields, requires more processing time.
         Parameters:
@@ -343,7 +343,7 @@ class MSSQL_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_MSSQL(self,  server = None, database = '', username = None, password = None, use_windows_authentication = True, driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
+    def login_to_mssql(self,  server = None, database = '', username = None, password = None, use_windows_authentication = True, driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
@@ -379,7 +379,7 @@ class MSSQL_Utilities:
         #return the connection and cursor to use to query against the database
         return (cursor_connection, cursor)
 
-    def query_MSSQL_return_DataFrame(self, query, cursor):
+    def query_mssql_return_dataframe(self, query, cursor):
         """
         Description: query a MSSQL server with a logged in cursor and
         process results into a pandas dataframe the return the dataframe.
@@ -409,7 +409,7 @@ class MSSQL_Utilities:
         # return the results of the query as a pandas data frame
         return results_df
 
-    def insert_dataframe_into_MSSQL_table(self, connection, cursor, df, tablename, column_types = [], cols = '', use_all_columns_in_df = True, close_connection = True):
+    def insert_dataframe_into_mssql_table(self, connection, cursor, df, tablename, column_types = [], cols = '', use_all_columns_in_df = True, close_connection = True):
         """Description: insert a dataframe into a mssql table, the whole dataframe will be inserted
         Parameters:
 
@@ -469,7 +469,7 @@ class MSSQL_Utilities:
             # close the connection
             connection.close()
 
-    def update_rows_in_MSSQL_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+    def update_rows_in_mssql_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
         Description: update multiples columns in MSSQL table from a dataframe on a where in list condition
 
@@ -512,7 +512,7 @@ class MSSQL_Utilities:
         # commit the sql statement
         connection.commit()
 
-    def delete_rows_in_MSSQL_table(self, connection, cursor, table_name, column_name, record_list):
+    def delete_rows_in_mssql_table(self, connection, cursor, table_name, column_name, record_list):
         """Description: generate a query string to delete records from a MSSQL table
            Parameters:
 
@@ -540,7 +540,7 @@ class MySQL_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_MySQL(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = '', username = None, password = None, ssl_disabled=True):
+    def login_to_mysql(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = '', username = None, password = None, ssl_disabled=True):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
@@ -560,7 +560,7 @@ class MySQL_Utilities:
         # return engine to perform operations with
         return engine
 
-    def query_MySQL_return_DataFrame(self, query, engine):
+    def query_mysql_return_dataframe(self, query, engine):
         """
         Description: query a MySQL server with a logged in cursor and
         process results into a pandas dataframe the return the dataframe.
@@ -579,7 +579,7 @@ class MySQL_Utilities:
         # return the dataframe of results from the MySQL table
         return df
 
-    def insert_dataframe_into_MySQL_table(self, engine, df, tablename, index = False, if_exists = 'fail'):
+    def insert_dataframe_into_mysql_table(self, engine, df, tablename, index = False, if_exists = 'fail'):
         """Description: attempt to insert an entire dataframe into a MySQL table
         Parameters:
 
@@ -600,7 +600,7 @@ class MySQL_Utilities:
         #upload records directly from dataframe using to_sql function
         df.to_sql(name = tablename, con = engine, index = index, if_exists = if_exists)
 
-    def update_rows_in_MySQL_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+    def update_rows_in_mysql_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
         Description: update multiples columns in MySQL table from a dataframe on a where in list condition
 
@@ -651,7 +651,7 @@ class MySQL_Utilities:
         #log to console commiting update to table now
         log.info('[Commiting update to MySQL table...]')
 
-    def delete_rows_in_MySQL_table(self, engine,  table_name, column_name, record_list):
+    def delete_rows_in_mysql_table(self, engine,  table_name, column_name, record_list):
         """Description: generate a query string to delete records from a MySQL table
            Parameters:
 

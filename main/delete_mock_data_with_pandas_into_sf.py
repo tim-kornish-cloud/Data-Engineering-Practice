@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 import os
 from simple_salesforce import Salesforce
-from custom_db_utilities import  SF_Utilities, Custom_Utilities
+from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = Custom_SF_Utilities()
+SF_Utils = SalesForce_Utilities()
 #create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
@@ -55,7 +55,7 @@ sf = SF_Utils.login_to_salesForce(username, password, token)
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 # convert query results to a dataframe
-accounts_to_delete_df = SF_Utils.load_query_with_lookups_into_DataFrame(account_query_results)
+accounts_to_delete_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
 accounts_to_delete_df = Utils.encode_df(accounts_to_delete_df)
 

@@ -11,12 +11,11 @@ Description: Load a csv of mock data into a pandas dataframe.
 import numpy as np
 import pandas as pd
 import os
-from simple_salesforce import Salesforce
-from custom_db_utilities import  SF_Utilities
+from custom_db_utilities import  SalesForce_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = Custom_SF_Utilities()
+SF_Utils = SalesForce_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
