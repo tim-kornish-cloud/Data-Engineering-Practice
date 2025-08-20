@@ -40,6 +40,8 @@ class SF_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
+
+           can add login credentials as instance variables to utilize in functions
         """
     def login_to_salesForce(self, username, password, security_token, environment = ''):
         """
@@ -337,6 +339,8 @@ class MSSQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
+
+           can add login credentials as instance variables to utilize in functions
         """
 
     def login_to_MSSQL(self,  server = None, database = '', username = None, password = None, use_windows_authentication = True, driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
@@ -532,6 +536,8 @@ class MySQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
+
+           can add login credentials as instance variables to utilize in functions
         """
 
     def login_to_MySQL(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = '', username = None, password = None, ssl_disabled=True):
