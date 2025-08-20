@@ -12,9 +12,9 @@ from simple_salesforce import Salesforce
 from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
 from credentials import Credentials
 
-#create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = SalesForce_Utilities()
-#create and instance of the custom utilities class used to format and modify dataframe data
+# create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
@@ -22,6 +22,9 @@ Cred = Credentials()
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
 environment = 'Dev'
+
+# set database to MySQL
+database = "Salesforce"
 
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
@@ -32,10 +35,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + environment + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + ".csv"
-
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
@@ -43,11 +45,11 @@ fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + ".
 # The credentials are stored as strings in a dictionary attribute of a class
 
 # get username from credentials
-username = Cred.get_username("Salesforce", environment)
+username = Cred.get_username(database, environment)
 # get password from credentials
-password = Cred.get_password("Salesforce", environment)
+password = Cred.get_password(database, environment)
 # get login token from credentials
-token = Cred.get_token("Salesforce", environment)
+token = Cred.get_token(database, environment)
 
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(username, password, token)

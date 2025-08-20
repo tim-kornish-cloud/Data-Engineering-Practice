@@ -3,6 +3,8 @@ Author: Timothy Kornish
 CreatedDate: August - 16 - 2025
 Description: Load a csv of mock data into a pandas dataframe.
              log into a MSSQL table.
+             query the records in the MSSQL table and merge against the csv records
+             isolate the matching records and upload an update to that subset of records foundd in MSSQL table
 
 """
 
@@ -12,7 +14,7 @@ import os
 from custom_db_utilities import  MSSQL_Utilities, Custom_Utilities
 from credentials import Credentials
 
-#create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom  utilities class
 Utils = Custom_Utilities()

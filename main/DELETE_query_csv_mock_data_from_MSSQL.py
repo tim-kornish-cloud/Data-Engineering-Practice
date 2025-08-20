@@ -3,7 +3,8 @@ Author: Timothy Kornish
 CreatedDate: August - 17 - 2025
 Description: Load a csv of mock data into a pandas dataframe.
              log into a MSSQL table.
-
+             query records from the table and merge against records in the CSV
+             isolate matching ids of matching records and upload list of ids in SQL string to delete from MSSQL table.
 """
 
 import numpy as np
@@ -12,7 +13,7 @@ import os
 from custom_db_utilities import  MSSQL_Utilities, Custom_Utilities
 from credentials import Credentials
 
-#create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom  utilities class
 Utils = Custom_Utilities()
@@ -81,12 +82,12 @@ both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, mock_data_
 #set table to update
 table_to_delete = '[Data_Engineering].[dbo].[Accounts_test_1]'
 
-#table key field
+# table key field
 table_UID = 'Account_Number_External_ID__c'
 
 # below is a sql list as a single string
 accounts_to_delete_list = Utils.generate_sql_list_from_df_column(both_df, 'Account_Number_External_ID__c', output = 'string')
 
-#delete records from table in MSSQL database
+# delete records from table in MSSQL database
 MSSQL_Utils.delete_rows_in_mssql_table(connection, cursor, table_to_delete,
                                       table_UID, accounts_to_delete_list)

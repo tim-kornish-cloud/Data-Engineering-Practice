@@ -3,6 +3,9 @@ Author: Timothy Kornish
 CreatedDate: August - 15 - 2025
 Description: Load a csv of mock data into a pandas dataframe.
              log into a MSSQL table.
+             Perform select query on table and load records into pandas DataFrame
+             merge records from table and csv
+             print out which records exist in which tables based on join Id column
 
 """
 

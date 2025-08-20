@@ -13,9 +13,9 @@ from simple_salesforce import Salesforce
 from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
 from credentials import Credentials
 
-#create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = SalesForce_Utilities()
-#create and instance of the custom utilities class used to format and modify dataframe data
+# create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
@@ -24,20 +24,27 @@ Cred = Credentials()
 # can have multiple environments in the same script at the same time
 environment = 'Dev'
 
-#number of records to delete
+# set database to MySQL
+database = "Salesforce"
+
+# number of records to attempted
 num_of_records = 5
 
-#starting index to choose records
-record_start = 0
+# starting index to choose records
+record_start = 5
 
-#set up directory pathway to load csv data and output fallout and success results to
+# query string to select records from salesforce
+# before uploading with a delete  DML operation
+account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + environment + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + environment + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
 input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
@@ -52,11 +59,11 @@ mock_df = pd.read_csv(input_csv_file)
 # The credentials are stored as strings in a dictionary attribute of a class
 
 # get username from credentials
-username = Cred.get_username("Salesforce", environment)
+username = Cred.get_username(database, environment)
 # get password from credentials
-password = Cred.get_password("Salesforce", environment)
+password = Cred.get_password(database, environment)
 # get login token from credentials
-token = Cred.get_token("Salesforce", environment)
+token = Cred.get_token(database, environment)
 
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(username, password, token)
@@ -76,12 +83,12 @@ accounts_df = Utils.encode_df(accounts_df)
 # select only 10 records to process
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 
-#merge the csv data with the salesforce data to match SF Ids to the CSV accounts
+# merge the csv data with the salesforce data to match SF Ids to the CSV accounts
 accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = True)
 
-#add new column called type and set all accounts to government
+# add new column called type and set all accounts to government
 accounts_to_update_df["Type"] = "Prospect"
-#add new column called type and set all accounts to government
+# add new column called type and set all accounts to government
 accounts_to_update_df["Industry"] = "Government"
 
 # isolate which account fields will be used in the update

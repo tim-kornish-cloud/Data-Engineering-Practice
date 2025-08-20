@@ -3,7 +3,7 @@ Author: Timothy Kornish
 CreatedDate: August - 11 - 2025
 Description: Load a csv of mock data into a pandas dataframe.
              log into a MSSQL table.
-
+             load records from csv into MSSQL table.
 """
 
 import numpy as np
@@ -12,7 +12,7 @@ import os
 from custom_db_utilities import  MSSQL_Utilities
 from credentials import Credentials
 
-#create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
@@ -21,13 +21,13 @@ Cred = Credentials()
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 
-#number of records to attempted
+# number of records to attempted
 num_of_records = 100
 
-#starting index to choose records
+# starting index to choose records
 record_start = 80
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
@@ -46,7 +46,7 @@ mock_data_df = pd.read_csv(input_csv_file)
 # select only 10 records
 df_to_upload = mock_data_df.iloc[record_start:record_start+num_of_records]
 
-#initiate an MS SQL cursor to query with
+# initiate an MS SQL connection and cursor to query with
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # select accounts to match against the csv to not attempt to insert duplicates
@@ -60,7 +60,7 @@ select_query = """SELECT TOP (1000) [AccountNumber]
       ,[Account_Number_ExternaL_ID__c]
   FROM [Data_Engineering].[dbo].[Accounts_test_1]"""
 
-#accounts in the mssql table shown in the query above
+# accounts in the mssql table shown in the query above
 account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
 # list of data types to convert the df columns to fit MSSQL
@@ -69,5 +69,5 @@ account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 # hardcoding these types instead of the entire dataframe
 column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
 
-#insert subset of the csv  from a dataframe into the mssql table
+# insert subset of the csv  from a dataframe into the mssql table
 MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, df_to_upload, 'Accounts_test_1', column_types)
