@@ -13,7 +13,7 @@ from custom_db_utilities import  MSSQL_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
-MSSQL_Utils = Custom_MSSQL_Utilities()
+MSSQL_Utils = MSSQL_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
@@ -47,7 +47,7 @@ mock_data_df = pd.read_csv(input_csv_file)
 df_to_upload = mock_data_df.iloc[record_start:record_start+num_of_records]
 
 #initiate an MS SQL cursor to query with
-connection, cursor = MSSQL_Utils.login_to_MSSQL(server = Cred.get_server(), database = Cred.get_database())
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # select accounts to match against the csv to not attempt to insert duplicates
 select_query = """SELECT TOP (1000) [AccountNumber]
@@ -61,12 +61,13 @@ select_query = """SELECT TOP (1000) [AccountNumber]
   FROM [Data_Engineering].[dbo].[Accounts_test_1]"""
 
 #accounts in the mssql table shown in the query above
-account_df = MSSQL_Utils.query_MSSQL_return_DataFrame(select_query, cursor)
+account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
 # list of data types to convert the df columns to fit MSSQL
 # need to find a way to parse the df.columns and generate this automatically
-# this is a temporaray bandaid being hardcoded
+# this is a temporaray bandaid being hardcoded, honestly may perform a subset of
+# hardcoding these types instead of the entire dataframe
 column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
 
 #insert subset of the csv  from a dataframe into the mssql table
-MSSQL_Utils.insert_dataframe_into_MSSQL_table(connection, cursor, df_to_upload, 'Accounts_test_1', column_types)
+MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, df_to_upload, 'Accounts_test_1', column_types)

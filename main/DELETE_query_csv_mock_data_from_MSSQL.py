@@ -13,7 +13,7 @@ from custom_db_utilities import  MSSQL_Utilities, Custom_Utilities
 from credentials import Credentials
 
 #create and instance of the custom salesforce utilities class used to interact with Salesforce
-MSSQL_Utils = Custom_MSSQL_Utilities()
+MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom  utilities class
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
@@ -50,7 +50,7 @@ mock_data_df = pd.read_csv(input_csv_file)
 df_to_upload = mock_data_df.iloc[record_start:record_start+num_of_records]
 
 # initiate an MS SQL cursor to query with
-connection, cursor = MSSQL_Utils.login_to_MSSQL(server = Cred.get_server(), database = Cred.get_database())
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # select accounts to match against the csv to not attempt to insert duplicates
 select_query = """SELECT TOP (1000) [AccountNumber]
@@ -64,7 +64,7 @@ select_query = """SELECT TOP (1000) [AccountNumber]
   FROM [Data_Engineering].[dbo].[Accounts_test_1]"""
 
 # accounts in the mssql table shown in the query above
-account_df = MSSQL_Utils.query_MSSQL_return_DataFrame(select_query, cursor)
+account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
 # format the merge column to remove any whitespace
 account_df.columns = account_df.columns.str.strip()
@@ -88,5 +88,5 @@ table_UID = 'Account_Number_External_ID__c'
 accounts_to_delete_list = Utils.generate_sql_list_from_df_column(both_df, 'Account_Number_External_ID__c', output = 'string')
 
 #delete records from table in MSSQL database
-MSSQL_Utils.delete_rows_in_MSSQL_table(connection, cursor, table_to_delete,
+MSSQL_Utils.delete_rows_in_mssql_table(connection, cursor, table_to_delete,
                                       table_UID, accounts_to_delete_list)

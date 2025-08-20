@@ -36,7 +36,7 @@ coloredlogs.install()
 # currently only using info debug level comments
 log.basicConfig(level = log.DEBUG)
 
-class SalesForce_Utilities:
+class Salesforce_Utilities:
     def __init__(self):
         """Constructor Parameters:
            - currently no customization used.
