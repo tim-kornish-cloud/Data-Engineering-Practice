@@ -7,24 +7,24 @@ Description: A backend utility file for logging into Salesforce,
              of execution start and end results.
 
 """
-#util libraries
+# util libraries
 from ctypes import util
 from datetime import datetime
 from collections import OrderedDict
 import time
 import logging as log
 import coloredlogs
-#pandas and numpy
+# pandas and numpy
 import numpy as np
 import pandas as pd
-#salesforce connector
+# salesforce connector
 from simple_salesforce import Salesforce
-#MSSQL connector
+# MSSQL connector
 import pyodbc
-#AWS S3 EC2 connector
+# AWS S3 EC2 connector
 import boto3
 import awswrangler as wr
-#mysql connector
+# mysql connector
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import pymysql
@@ -182,7 +182,7 @@ class Salesforce_Utilities:
         for column in df.columns:
             # check if any column has type of ordered dict needing unnesting
             if type(df[column][0]) == OrderedDict:
-                #continue loop
+                # continue recursion loop
                 continue_loop = True
         # Recursion check, if more unnested columns exist, go again
         if continue_loop:
@@ -233,11 +233,11 @@ class Salesforce_Utilities:
 
         Return: sf_records - list of dicts, each dict is a single layer deep, no nesting.
         """
-        #log to console, reformatting records to json format
+        # log to console, reformatting records to json format
         log.info('[Reformatting data for SF JSON]')
-        #conver the dataframe to a json dictionary
+        # conver the dataframe to a json dictionary
         sf_records = df.to_dict('records')
-        #return the records in salesforce format
+        # return the records in salesforce format
         return sf_records
 
     def upload_dataframe_to_salesforce(self, sf, df, object_name, dml_operation, success_file = None, fallout_file = None, batch_size = 1000, external_id_field=None, time_delay = None):
@@ -308,7 +308,7 @@ class Salesforce_Utilities:
                 if time_delay != None:
                     # time delay
                     time.sleep(time_delay)
-            #full list of every record attempted
+            # full list of every record attempted
             results_df = pd.concat(results_list)
             # split the results int passing and fallout again
             # passing : 'RESULTS_success' == True
@@ -316,23 +316,23 @@ class Salesforce_Utilities:
             # fallout : 'RESULTS_success' == False
             fallout_df = results_df[results_df['RESULTS_success'] == False]
 
-            #if a success file pathway is added, write the success datafame to the csv
+            # if a success file pathway is added, write the success datafame to the csv
             if success_file != None:
-                #open the file location in write mode
+                # open the file location in write mode
                 with open(success_file, mode = 'w', newline = '\n') as file:
-                    #write the dataframe to the file using a commma as the delimeter
+                    # write the dataframe to the file using a commma as the delimeter
                     passing_df.to_csv(file, sep = ',', index = False)
-            #if a fallout file pathway is added, write the fallout datafame to the csv
+            # if a fallout file pathway is added, write the fallout datafame to the csv
             if fallout_file != None:
-                #open the file location in write mode
+                # open the file location in write mode
                 with open(fallout_file, mode = 'w', newline = '\n') as file:
-                    #write the dataframe to the file using a commma as the delimeter
+                    # write the dataframe to the file using a commma as the delimeter
                     fallout_df.to_csv(file, sep = ',', index = False)
             # return both the passing and fallout dataframes
             return [passing_df, fallout_df]
-        #no records are in the dataframe, nothing to process
+        # no records are in the dataframe, nothing to process
         else:
-            #log to console, nothing included in dataframe to process
+            # log to console, nothing included in dataframe to process
             log.info('[No Records to process]')
 
 class MSSQL_Utilities:
@@ -356,27 +356,27 @@ class MSSQL_Utilities:
 
         Return: cursor
         """
-        #login using connection string
+        # login using connection string
         if use_windows_authentication:
             # log to console status of logging into database
             log.info('[Logging into MSSQL DB using windows Auth on DB: ' + database + ']')
-            #establish a connection
+            # establish a connection
             cursor_connection = pyodbc.connect(driver=driver,
                                                host=server,
                                                database=database,
                                                trusted_connection=trusted_connection)
-        #log in using credentials: username/password
+        # log in using credentials: username/password
         else:
             # log to console status of logging into database
             log.info('[Logging into MSSQL DB using credentials on DB: ' + database + ']')
             # create instance of cursor to connect to MSSQL database.
             cursor_connection = pyodbc.connect(driver=driver, host=server, database=database,
                         user=username, password=password)
-        #convert the instance to a cursor
+        # convert the instance to a cursor
         cursor = cursor_connection.cursor()
         # log to console the cursor is created
         log.info('[Creating Cursor]')
-        #return the connection and cursor to use to query against the database
+        # return the connection and cursor to use to query against the database
         return (cursor_connection, cursor)
 
     def query_mssql_return_dataframe(self, query, cursor):
@@ -438,29 +438,29 @@ class MSSQL_Utilities:
         # generate the sql commit with the dataframe
         sql = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(tablename, cols, params)
 
-        #for loop only works when provided a list of column converted types
+        # for loop only works when provided a list of column converted types
         log.info('[Converting data types in DataFrame...]')
-        #loop through each column to convert the type every value
+        # loop through each column to convert the type every value
         for index, col in enumerate(df.columns):
-            #confirm the index is still within range of acceptable indexes
+            # confirm the index is still within range of acceptable indexes
             if index < len(column_types):
-                #check if type == int
+                # check if type == int
                 if column_types[index] == 'int':
                     df[col] = df[col].astype(int)
-                #check if type == string
+                # check if type == string
                 if column_types[index] == 'str':
                     df[col] = df[col].astype(str)
-                #check if type == float
+                # check if type == float
                 if column_types[index] == 'float':
                     df[col] = df[col].astype(float)
-                #check if type == boolean
+                # check if type == boolean
                 if column_types[index] == 'bool':
                     df[col] = df[col].astype(bool)
-        #convert the rows in the dataframe into tuples
+        # convert the rows in the dataframe into tuples
         data = [tuple(x) for x in df.values]
-        #set the bulk insert for pyodbc cursor.fast_executemany = True
+        # set the bulk insert for pyodbc cursor.fast_executemany = True
         cursor.fast_executemany = True
-        #execute insert of records
+        # execute insert of records
         cursor.executemany(sql, data)
         # commit the sql statement
         connection.commit()
@@ -495,7 +495,7 @@ class MSSQL_Utilities:
         sql_update = "UPDATE " + table_name + " SET "
         # add column names and column values to set in the update
         for index, col in enumerate(columns_to_update):
-            #make sure to not grab a value outside of range and not the last row
+            # make sure to not grab a value outside of range and not the last row
             if index < len(columns_to_update) - 1:
                 # for all lines except the last row, add column name, value, and comma
                 sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
@@ -505,9 +505,9 @@ class MSSQL_Utilities:
                 sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
         # add where clause to end of sql string
         sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
-        #execute the deletion of records
+        # execute the deletion of records
         cursor.execute(sql_update)
-        #log to console commiting update to table now
+        # log to console commiting update to table now
         log.info('[Commiting update to MSSQL table...]')
         # commit the sql statement
         connection.commit()
@@ -526,8 +526,7 @@ class MSSQL_Utilities:
         """
         # Example with parameterization
         sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
-
-        #execute the deletion of records
+        # execute the deletion of records
         cursor.execute(sql_delete)
         # commit the sql statement
         connection.commit()
@@ -553,7 +552,7 @@ class MySQL_Utilities:
 
         Return: MySQL engine
         """
-        #log to console engine is created
+        # log to console engine is created
         log.info('[MySQL engine connected...]')
         # create engine to connect to MySQL
         engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
@@ -597,7 +596,7 @@ class MySQL_Utilities:
         """
         # if the df column list matches the table, use all columns
         log.info('[Uploading Dataframe to MySQL DB Table...]')
-        #upload records directly from dataframe using to_sql function
+        # upload records directly from dataframe using to_sql function
         df.to_sql(name = tablename, con = engine, index = index, if_exists = if_exists)
 
     def update_rows_in_mysql_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
@@ -625,7 +624,7 @@ class MySQL_Utilities:
         sql_update = "UPDATE " + table_name + " SET "
         # add column names and column values to set in the update
         for index, col in enumerate(columns_to_update):
-            #make sure to not grab a value outside of range and not the last row
+            # make sure to not grab a value outside of range and not the last row
             if index < len(columns_to_update) - 1:
                 # for all lines except the last row, add column name, value, and comma
                 sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
@@ -636,19 +635,19 @@ class MySQL_Utilities:
         # add where clause to end of sql string
         sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
 
-        #create connection to execute query from engine
+        # create connection to execute query from engine
         with engine.connect() as connection:
-            #set safe mode off before update
+            # set safe mode off before update
             connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
             connection.commit()
-            #execute the update of records
+            # execute the update of records
             connection.execute(text(sql_update))
             # commit the sql statement
             connection.commit()
-            #set safe mode back on
+            # set safe mode back on
             connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
             connection.commit()
-        #log to console commiting update to table now
+        # log to console commiting update to table now
         log.info('[Commiting update to MySQL table...]')
 
     def delete_rows_in_mysql_table(self, engine,  table_name, column_name, record_list):
@@ -667,17 +666,17 @@ class MySQL_Utilities:
 
         # open connection and submit the delete query
         with engine.connect() as connection:
-            #set safe mode off before update
+            # set safe mode off before update
             connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
             connection.commit()
-            #execute the update of records
+            # execute the update of records
             connection.execute(text(sql_delete))
             # commit the sql statement
             connection.commit()
-            #set safe mode back on
+            # set safe mode back on
             connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
             connection.commit()
-        #log to console commiting update to table now
+        # log to console commiting update to table now
         log.info('[Commiting delete to MySQL table...]')
 
 class EC2_S3_Utilities:
@@ -758,7 +757,7 @@ class Custom_Utilities:
         Return: merged dataframe
         """
         # log to console merging of dataframe is occuring
-        log.info('[merging dataframes...]')
+        log.info('[Merging dataframes...]')
         # return merged dataframe
         return pd.merge(left=left, right=right,
                         how=how, left_on=left_on, right_on=right_on,
@@ -783,13 +782,21 @@ class Custom_Utilities:
 
         Return: tuple of three dataframes
         """
+        # log to console merging of dataframe is occuring
+        log.info('[Merging dataframes...]')
+        # merge the two input dataframes
         merged_df = self.merge_dfs(left=left, right=right,
                         how=how, left_on=left_on, right_on=right_on,
                         suffixes=suffixes, indicator=indicator, validate=validate)
+        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in both input df
         both_df = merged_df[merged_df["_merge"] == "both"]
-
+        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the left dataframe
         left_only_df = merged_df[merged_df["_merge"] == "left_only"]
+        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the right dataframe
         right_only_df = merged_df[merged_df["_merge"] == "right_only"]
+        # log to console splitting of dataframe is occuring
+        log.info('Analyzing and splitting input dataframes...]')
+        # return a tuple showing records from both input df split among three new dataframes
         return (both_df, left_only_df, right_only_df)
 
     def format_columns_dtypes(self, df):
@@ -804,26 +811,29 @@ class Custom_Utilities:
 
         Return: dataframe
         """
+        # log to console updating the dataframe datatypes
         log.info('[updating datatypes of dataframe...]')
+        # loop through each column in the dataframe to format
         for index, col in enumerate(df.columns):
+            # confirm the loop index exists in the range of columns
             if index < len(df.columns):
-                #check if type == int
+                # check if type == int
                 if df[col].dtypes == 'int64':
-                    print("int")
+                    # set column to type int
                     df[col] = df[col].astype(int)
-                #check if type == string, date, or object
+                # check if type == string, date, or object
                 if df[col].dtypes == 'object':
-                    print("object")
+                    # set column to type str
                     df[col] = df[col].astype(str)
-                #check if type == float
+                # check if type == float
                 if df[col].dtypes == 'float64':
-                    print("float")
+                    # set column to type float
                     df[col] = df[col].astype(float)
-                #check if type == boolean
+                # check if type == boolean
                 if df[col].dtypes == 'bool':
-                    print("bool")
+                    # set column to type bool
                     df[col] = df[col].astype(bool)
-
+        # return the reformatted dataframes
         return df
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
@@ -842,8 +852,9 @@ class Custom_Utilities:
         # loop through list of multiple DataFrame
         # each dataframe will be its own sheet on the document
         log.info('[writing each sheet to excelfile]')
+        # loop through the list of each dataframe to write to a sheet
         for index, df in enumerate(dfs):
-            #log to console what sheet is being written
+            # log to console what sheet is being written
             log.info('[writing sheet to excel file: ' + str(sheet_names[index]) + ']')
             # write the individual dataframe to it's associated sheet
             df.to_excel(writer, sheet_names[index], index = False)
@@ -871,7 +882,7 @@ class Custom_Utilities:
 
 
 
-    def add_sequence(self, df, group_fields, new_field, changing_fields = None, base_value = 10, increment_value = 10, sort = True):
+    def add_sequence(self, df, group_fields, new_field, changing_fields = None, base_value = 10, increment_value = 10, sort = True, incremental_log = 1000):
         """
         Description: Create a new column that increments every time a group has
                      changes on a specific subgroup of fields, sorting matters,
@@ -903,7 +914,7 @@ class Custom_Utilities:
             # iterrate throught the dataframe row by row
             for index, row in df.iterrows():
                 # every 10,000 rows add a log output for timekeeping
-                if index % 10000 == 0:
+                if index % incremental_log == 0:
                     # log to console a timestamp and number of rows processed
                     log.info('[rows processed: ' + str(index) + ']')
                 # if the current row's group is not the same as the previous row's group
@@ -952,6 +963,7 @@ class Custom_Utilities:
 
         # begin the string list that will be return by the funciont
         sql_string = "("
+        # drop duplicate from the dataframe column based on a subset before generating the SQL list
         unique_df = df.drop_duplicates(subset = [column])
         # loop through the rows of the dataframe to add values to the stirng
         for index, row in unique_df.iterrows():
@@ -994,7 +1006,7 @@ class Custom_Utilities:
         Description: generate a string list of values from a dataframe column to inject into a query
         Parameters:
 
-        ts_format - default to '%Y-%m-%d__%H-%M-%S'
+        ts_format - default to '%Y-%m-%d__%H-%M-%S' - this is the default of salesforce
 
         Return:     - datetime of right now down to the second.
         """
