@@ -19,3 +19,9 @@ Output\UPSERT\*.csv
 *.exe
 *.html
 *.hcl
+*.yml
+*.rst
+*.zip
+*.index
+**/aws/
+**/.terraform/
