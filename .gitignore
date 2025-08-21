@@ -26,3 +26,7 @@ Output\UPSERT\*.csv
 **/aws/
 **/.terraform/
 *.sqlite
+*.tfstate
+*.TMP
+*.backup
+*.bin
