@@ -15,3 +15,7 @@ Output\UPSERT\*.csv
 *.pyc
 *.sqlite
 *.pem
+*.so
+*.exe
+*.html
+*.hcl
