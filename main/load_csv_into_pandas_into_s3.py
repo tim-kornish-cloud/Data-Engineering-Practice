@@ -4,14 +4,11 @@ CreatedDate: August - 21 - 2025
 Description: Load a csv of mock data into a pandas dataframe.
              log into aws with boto3 and awswrangler and load
              the csv to the s3 bucket from the dataframe.
-
 """
 
 import numpy as np
 import pandas as pd
 import os
-import boto3
-import awswrangler
 from custom_db_utilities import  EC2_S3_Utilities
 from credentials import Credentials
 
