@@ -705,9 +705,17 @@ class EC2_S3_Utilities:
 
         Return: boto3.client()
         """
-        # log to console setting up client to access s3 buckets
-        log.info('[Initiating boto3 client connection...]')
-        return boto3.client(s3)
+        # try except block on uploading the dataframe to s3
+        try:
+            # log to console setting up client to access s3 buckets
+            log.info('[Initiating boto3 client connection...]')
+            return boto3.client(service_name = service_name,
+                                region_name = region_name,
+                                aws_access_key_id = aws_access_key_id,
+                                aws_secret_access_key = aws_secret_access_key)
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.info(f"[Error initiating boto3 client connection]")
 
     def upload_dataframe_to_s3(self, df, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/file.txt'):
         """
@@ -719,10 +727,11 @@ class EC2_S3_Utilities:
         object_key      - string, name of file to upload dataframe into, make sure to end with .csv
 
 
-        Return:
+        Return: nothing
         """
         # set path string variable of uri to upload file to
         s3_path = f"s3://{bucket_name}/{object_key}"
+        # try except block on uploading the dataframe to s3
         try:
             # log to console about to upload dataframe to s3 bucket
             log.info(f"[Uploading dataframe as file: {object_key} to s3 bucket: {bucket_name}...]")
@@ -752,24 +761,37 @@ class EC2_S3_Utilities:
             log.info(f"[Error downloading CSV from S3: {e}]")
         return df
 
-    def delete_dataframe_in_s3(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
+    def delete_dataframe_in_s3(self, s3_client, bucket_name, file_key):
         """
-        Description: # Define your bucket name, object key (file path in S3), and local file path
-
+        Description: delete a file from an s3 bucket with a logged in boto3 client
         Parameters:
-        df              - pandas dataframe to upload as csv
-        bucket_name     - string, name of s3 bucket
-        object_key      - string, name of file to upload dataframe into, make sure to end with .csv
+        s3_client       - boto3 client instance
+        bucket_name     - string, name of bucket in s3
+        file_key        - string, file to be deleted
 
-
-        Return:
+        Return: response from s3_client.delete_object()
         """
+        # try except block attempting to delete a file from s3 bucket
         try:
-            #delete
-            print("a")
+            # get response from attempting to delete object/file from bucket
+            response = s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+            #check the response body for status of 204 meaning success and no message body to send back
+            if(response['ResponseMetadata']['HTTPStatusCode'] == 204):
+                # log to console successful attempt to delete file from bucket
+                log.info(f"[File '{file_key}' deleted successfully from bucket '{bucket_name}'.]")
+            # return the response to view
+            return response
+        # catch exception if the bucket name does not exist
+        # except s3_client.exceptions.NoSuchBucket as e:
+        #     # log to console no bucket with a matching name is found
+        #     log.info(f"[Error deleting file,  no bucket found: '{bucket_name}': {e}]")
+        # # catch exception if the object does not exist in the s3 bucket
+        # except s3_client.exceptions.NoSuchKey as e:
+        #     # log to console no file in this bucket is found
+        #     log.info(f"[Error deleting file; in bucket '{bucket_name}' no file found: '{file_key}': {e}]")
+        # any other general exception
         except Exception as e:
-            log.info(f"[Error deleting CSV from S3: {e}]")
-        return df
+            log.info(f"[Error deleting file '{file_key}': {e}]")
 
     def view_s3_content(self, s3, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/text_file.txt'):
         """Description: # Define your bucket name, object key (file path in S3), and local file path
