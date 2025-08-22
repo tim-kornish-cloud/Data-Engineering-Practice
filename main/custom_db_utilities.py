@@ -693,22 +693,83 @@ class EC2_S3_Utilities:
            #     print(f"Error reading CSV from S3 with awswrangler: {e}")
         """
 
-    def create_s3_client(self, s3 = 's3'):
+    def create_s3_client(self, service_name, region_name, aws_access_key_id, aws_secret_access_key):
+        """
+        Description: # Connect to an S3 bucket using an IAM user access key pair
+
+        Parameters:
+        service_name            - string, default = s3
+        region_name             - string, default us-east-2
+        aws_access_key_id       - string, set up IAM User and create access key
+        aws_secret_access_key   - string, set up IAM User and create access key
+
+        Return: boto3.client()
+        """
+        # log to console setting up client to access s3 buckets
+        log.info('[Initiating boto3 client connection...]')
         return boto3.client(s3)
 
-    def download_file_from_s3_to_local(self, bucket_name = 'your-s3-bucket-name',
-                                             object_key = 'path/to/your/file.txt',
-                                             local_file_path = 'downloaded_file.txt'):
-        """Description: # Define your bucket name, object key (file path in S3), and local file path
+    def upload_dataframe_to_s3(self, df, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/file.txt'):
+        """
+        Description: # Define your bucket name, object key (file path in S3), and local file path
+
         Parameters:
+        df              - pandas dataframe to upload as csv
+        bucket_name     - string, name of s3 bucket
+        object_key      - string, name of file to upload dataframe into, make sure to end with .csv
+
+
+        Return:
+        """
+        # set path string variable of uri to upload file to
+        s3_path = f"s3://{bucket_name}/{object_key}"
+        try:
+            # log to console about to upload dataframe to s3 bucket
+            log.info(f"[Uploading dataframe as file: {object_key} to s3 bucket: {bucket_name}...]")
+            # upload dataframe to s3 bucket
+            df.to_csv(s3_path, index = False)
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.info(f"[Error uploading CSV to S3: {e} at path: {s3_path}]")
+
+    def download_dataframe_from_s3(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
+        # Read CSV directly from S3 using pandas
+        """
+        Description: # Define your bucket name, object key (file path in S3), and local file path
+
+        Parameters:
+        df              - pandas dataframe to upload as csv
+        bucket_name     - string, name of s3 bucket
+        object_key      - string, name of file to upload dataframe into, make sure to end with .csv
+
 
         Return:
         """
         try:
             s3.download_file(bucket_name, object_key, local_file_path)
-            log.info(f"File '{object_key}' downloaded to '{local_file_path}' successfully.")
+            log.info(f"[File '{object_key}' downloaded to '{local_file_path}' successfully.]")
         except Exception as e:
-            log.info(f"Error downloading file: {e}")
+            log.info(f"[Error downloading CSV from S3: {e}]")
+        return df
+
+    def delete_dataframe_in_s3(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
+        """
+        Description: # Define your bucket name, object key (file path in S3), and local file path
+
+        Parameters:
+        df              - pandas dataframe to upload as csv
+        bucket_name     - string, name of s3 bucket
+        object_key      - string, name of file to upload dataframe into, make sure to end with .csv
+
+
+        Return:
+        """
+        try:
+            #delete
+            print("a")
+        except Exception as e:
+            log.info(f"[Error deleting CSV from S3: {e}]")
+        return df
 
     def view_s3_content(self, s3, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/text_file.txt'):
         """Description: # Define your bucket name, object key (file path in S3), and local file path
@@ -722,16 +783,6 @@ class EC2_S3_Utilities:
             log.info(object_content)
         except Exception as e:
             log.info(f"Error reading object content: {e}")
-
-    def load_csv_from_s3_to_df(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
-        # Read CSV directly from S3 using pandas
-        try:
-            df = pd.read_csv(s3_file)
-            log.info("DataFrame from S3:")
-            log.info(df.head())
-        except Exception as e:
-            log.info(f"Error reading CSV from S3: {e}")
-        return df
 
 class Custom_Utilities:
     def __init__(self):
