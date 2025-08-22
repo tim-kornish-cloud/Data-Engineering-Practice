@@ -741,25 +741,30 @@ class EC2_S3_Utilities:
             # log error when attempting to upload file to s3 bucket
             log.info(f"[Error uploading CSV to S3: {e} at path: {s3_path}]")
 
-    def download_dataframe_from_s3(self, s3_file = f"s3://your-s3-bucket-name/path/to/your/data.csv"):
+    def download_dataframe_from_s3(self, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/data_file.csv'):
         # Read CSV directly from S3 using pandas
         """
         Description: # Define your bucket name, object key (file path in S3), and local file path
 
         Parameters:
-        df              - pandas dataframe to upload as csv
         bucket_name     - string, name of s3 bucket
         object_key      - string, name of file to upload dataframe into, make sure to end with .csv
 
-
         Return:
         """
+        # set path string variable of uri to upload file to
+        s3_path = f"s3://{bucket_name}/{object_key}"
+        # try except block to download csv from s3 bucket
         try:
-            s3.download_file(bucket_name, object_key, local_file_path)
-            log.info(f"[File '{object_key}' downloaded to '{local_file_path}' successfully.]")
+            # read the s3 object into a dataframe
+            df = pd.read_csv(s3_path)
+            # log successfully loading the csv into a dataframe
+            log.info(f"[File '{object_key}' downloaded from '{bucket_name}' successfully.]")
+            #return the downloaded file as dataframe
+            return df
         except Exception as e:
+            # log error to console, couldn't process request
             log.info(f"[Error downloading CSV from S3: {e}]")
-        return df
 
     def delete_dataframe_in_s3(self, s3_client, bucket_name, file_key):
         """
@@ -792,19 +797,6 @@ class EC2_S3_Utilities:
         # any other general exception
         except Exception as e:
             log.info(f"[Error deleting file '{file_key}': {e}]")
-
-    def view_s3_content(self, s3, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/text_file.txt'):
-        """Description: # Define your bucket name, object key (file path in S3), and local file path
-        Parameters:
-        Return:
-        """
-        try:
-            response = s3.get_object(Bucket=bucket_name, Key=object_key)
-            object_content = response['Body'].read().decode('utf-8') # Decode for text files
-            log.info("Content of the S3 object:")
-            log.info(object_content)
-        except Exception as e:
-            log.info(f"Error reading object content: {e}")
 
 class Custom_Utilities:
     def __init__(self):
