@@ -29,12 +29,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import pymysql
 import mysql.connector
+#MongoDB
+from pymongo import MongoClient
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
 # set debug level for which debugging is output to console,
 # currently only using info debug level comments
-log.basicConfig(level = log.DEBUG)
+log.basicConfig(level = log.ERROR)
 
 class Salesforce_Utilities:
     def __init__(self):
@@ -715,7 +717,7 @@ class EC2_S3_Utilities:
                                 aws_secret_access_key = aws_secret_access_key)
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
-            log.info(f"[Error initiating boto3 client connection]")
+            log.exception(f"[Error initiating boto3 client connection]")
 
     def upload_dataframe_to_s3(self, df, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/file.txt'):
         """
@@ -739,7 +741,7 @@ class EC2_S3_Utilities:
             df.to_csv(s3_path, index = False)
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
-            log.info(f"[Error uploading CSV to S3: {e} at path: {s3_path}]")
+            log.exception(f"[Error uploading CSV to S3: {e} at path: {s3_path}]")
 
     def download_dataframe_from_s3(self, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/data_file.csv'):
         # Read CSV directly from S3 using pandas
@@ -764,7 +766,7 @@ class EC2_S3_Utilities:
             return df
         except Exception as e:
             # log error to console, couldn't process request
-            log.info(f"[Error downloading CSV from S3: {e}]")
+            log.exception(f"[Error downloading CSV from S3: {e}]")
 
     def delete_dataframe_in_s3(self, s3_client, bucket_name, file_key):
         """
@@ -796,7 +798,126 @@ class EC2_S3_Utilities:
         #     log.info(f"[Error deleting file; in bucket '{bucket_name}' no file found: '{file_key}': {e}]")
         # any other general exception
         except Exception as e:
-            log.info(f"[Error deleting file '{file_key}': {e}]")
+            log.exception(f"[Error deleting file '{file_key}': {e}]")
+
+class MongoDB_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+        """
+    def create_mongo_client(self, uri = "mongodb://localhost:27017/"):
+        """
+        Description: connect to a mongodb database and return a client
+        - in the future may add other paramters for non-localhost
+
+        Parameters:
+        uri         - string, path to the mongodb database
+
+        Return: MongoClient
+        """
+        # try except block on connecting to a mongodb client,
+        # will not error connecting to nothing or random strings, not sure why
+        try:
+            # create client using an URI
+            client = MongoClient('localhost', 27017)# client = MongoClient(uri)
+            # log to console setting up client to access s3 buckets
+            log.info(f"[Initiating mongodb client connection: {uri}]")
+            #return the client
+            return client
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.exception(f"[Error initiating mongo client connection]")
+
+    def insert_dataframe_into_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = True):
+        """
+        Description: connect to a mongodb database and return a client
+        - in the future may add other paramters for non-localhost
+
+        Parameters:
+        client,
+        db,
+        collection,
+        field,
+        value,
+        close_connection = Tru
+
+        Return: none
+        """
+        # try except block on connecting to a mongodb client
+        try:
+            if field is not None and value is not None:
+                cursor = collection.find({field : value})
+            else:
+                cursor = collection.find()
+            # db = client['your_database_name']  # Replace with your database name
+            # collection = db['your_collection_name']
+            # data_dict = df.to_dict("records")
+            #c ollection.insert_many(data_dict)
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.exception(f"[Error initiating mongo client connection]")
+
+        # db = client['your_database_name']  # Replace with your database name
+        # collection = db['your_collection_name']
+        # data_dict = df.to_dict("records")
+        #c ollection.insert_many(data_dict)
+
+        #bulk_write(), as long as UpdateMany or DeleteMany are not included.
+
+# delete_one()
+#
+# insert_one()
+#
+# insert_many()
+#
+# replace_one()
+#
+# update_one()
+#
+# find_one_and_delete()
+#
+# find_one_and_replace()
+#
+# find_one_and_update()
+
+    def retrieve_dataframe_from_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = True):
+        """
+        Description: connect to a mongodb database and return a client
+        - in the future may add other paramters for non-localhost
+
+        Parameters:
+        client,
+        db,
+        collection,
+        field,
+        value,
+        close_connection = Tru
+
+        Return: MongoClient
+        """
+        # try except block on connecting to a mongodb client
+        try:
+            if field is not None and value is not None:
+                cursor = collection.find({field : value})
+            else:
+                print("else")
+                cursor = collection.find({})
+            #print(cursor)
+            #print(list(cursor))
+
+            df = pd.DataFrame(list(cursor))
+            #print(df)
+            if close_connection:
+                # Close the MongoDB connection
+                client.close()
+            #return the generated dateframe from the mongodb collection
+            return df
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.exception(f"[Error initiating mongo client connection]")
+
+    def delete_dataframe_from_mongodb_collection(self, df):
+        print("update me")
 
 class Custom_Utilities:
     def __init__(self):
@@ -804,8 +925,7 @@ class Custom_Utilities:
            - currently no customization used.
         """
 
-    def merge_dfs(self, left, right, left_on, right_on, how ='inner',
-                  suffixes = ('_left', '_right'), indicator = True, validate = None):
+    def merge_dfs(self, left, right, left_on, right_on, how ='inner', suffixes = ('_left', '_right'), indicator = True, validate = None):
         """
         Description: merge two dataframes based on list of columns to join on
         Parameters:
@@ -828,8 +948,7 @@ class Custom_Utilities:
                         how=how, left_on=left_on, right_on=right_on,
                         suffixes=suffixes, indicator=indicator, validate=validate)
 
-    def get_df_diffs(self, left, right, left_on, right_on, how ='inner',
-                  suffixes = ('_left', '_right'), indicator = True, validate = None):
+    def get_df_diffs(self, left, right, left_on, right_on, how ='inner', suffixes = ('_left', '_right'), indicator = True, validate = None):
         """
         Description: merge two dataframes based on list of columns to join on,
                      then return a tuple of 3 dataframes, 1 where records exist in both left and right,
@@ -943,9 +1062,6 @@ class Custom_Utilities:
         log.info('[encoding query results in DataFrames]')
         # return the encoded data for strings
         return df.map(lambda x : x.encode(encoding).decode(decoding) if isinstance(x, str) else x)
-
-
-
 
     def add_sequence(self, df, group_fields, new_field, changing_fields = None, base_value = 10, increment_value = 10, sort = True, incremental_log = 1000):
         """
