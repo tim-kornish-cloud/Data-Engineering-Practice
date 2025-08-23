@@ -806,13 +806,15 @@ class MongoDB_Utilities:
         Constructor Parameters:
         - currently no customization used.
 
-        list of ETL functions for MongoDB
+        list of ETL functions for MongoDB using pymongo
         # bulk_write(), as long as UpdateMany or DeleteMany are not included.
         # delete_one()
+        # delete_many()
         # insert_one()
         # insert_many()
         # replace_one()
         # update_one()
+        # update_many()
         # find_one_and_delete()
         # find_one_and_replace()
         # find_one_and_update()
@@ -832,19 +834,22 @@ class MongoDB_Utilities:
         # will not error connecting to nothing or random strings, not sure why
         try:
             # create client using an URI
-            client = MongoClient('localhost', 27017)# client = MongoClient(uri)
+            client = MongoClient(uri)
             # log to console setting up client to access s3 buckets
             log.info(f"[Initiating mongodb client connection: {uri}]")
             #return the client
             return client
+        # exception block - error connecting to mongodb
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
-            log.exception(f"[Error initiating mongo client connection]")
+            log.exception(f"[Error initiating mongo client connection... {e}]")
 
     def insert_dataframe_into_mongodb_collection(self, df, client, db, collection, field = None, value = None, close_connection = True):
         """
-        Description: connect to a mongodb database and return a client
-        - in the future may add other paramters for non-localhost
+        Description: upload a dataframe into a mongodb database collection
+        if the collection does not exist, it will be created, then records inserted into it.
+        - in future can perform query against mongo to check if collection exists first
+          so as not to accidentally create new collections
 
         Parameters:
         client              - MongoClient connection
@@ -878,25 +883,26 @@ class MongoDB_Utilities:
                 client.close()
             # return the results of the upload
             return result
+        # exception block - error inserting records into collection
         except Exception as e:
-            # log error when attempting to upload file to s3 bucket
-            log.exception(f"[Error initiating mongo client connection]")
+            # log error when attempting to insert records into collection
+            log.exception(f"[Error inserting records into mongodb collection... {e}]")
 
-    def retrieve_dataframe_from_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = False):
+    def query_dataframe_from_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = False):
         """
-        Description: connect to a mongodb database and return a client
-        - in the future may add other paramters for non-localhost
+        Description: query against a mongodb database collection,
+        and either return a subset of records in the collection or the entire collection
+        leave field and value set to None to retrieve all records in collection
 
         Parameters:
-        client              -
-        db                  -
-        collection          -
-        field               -
-        value               -
-        close_connection    -
+        client              - MongoClient connection
+        db                  - string, database name in mongodb
+        collection          - string, collection name in database to insert records
+        field               - string, collection field or pandas column name
+        value               - string, records that match the value for the above field in a collection
+        close_connection    - boolean, default to false, true to close mongodb connection
 
-
-        Return: MongoClient
+        Return: pandas dataframe
         """
         # try except block on connecting to a mongodb client
         try:
@@ -918,11 +924,12 @@ class MongoDB_Utilities:
             log.info(f"[Records converted to a pandas dataframe]")
             # return the generated dateframe from the mongodb collection
             return df
+        # exception block - error retrieving records from collection
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
-            log.exception(f"[Error initiating mongo client connection]")
+            log.exception(f"[Error querying records/converting to a dataframe...{e}]")
 
-    def delete_dataframe_from_mongodb_collection(self, df, client, db, collection, field = None, value = None, close_connection = False):
+    def delete_dataframe_from_mongodb_collection(self, df, client, db, collection, field = None, value = None, field_is_unique = False, close_connection = False):
         """
         Description: delete a single record or a list of records based on a single condition
         add functionality to with df.iterrows(): to delete based on condition in every row of dataframe
@@ -934,11 +941,12 @@ class MongoDB_Utilities:
         field               - string, unique id column used to identify the deleting records
         Value               - string, unique id value used to identify the deleting records
         collection          - string, collection name in database to insert records
+        field_is_unique     - boolean, default to false, true if column has only unique values
         close_connection    - boolean, default to false, true to close mongodb connection
 
         Return: result from upload of records, single record upload will return id
         """
-        # try except block on connecting to a mongodb client
+        # try except block deleting records from a mongodb collection based on single column value pair
         try:
             # if deleting records based on single condition
             if field is not None and value is not None:
@@ -947,7 +955,7 @@ class MongoDB_Utilities:
                 # attempt to insert the record as a dictionary to the mongodb collection
                 result = collection.delete_many(record_to_delete_query)
                 # log to console results of deleting record to collection
-                log.info(f"[Single record deleted with ID: {result}]")
+                log.info(f"[Records deleted based on field value pair {field} : {value}; results: {result}]")
             # loop through dataframe andf delete one record ata a time based on column and row value
             else:
                 # convert the dataframe to a dictionary
@@ -956,19 +964,68 @@ class MongoDB_Utilities:
                 for index, row in df.iterrows():
                     # create query dict from the record and field
                     record_to_delete_query = {field : row[field]}
-                    # attempt to insert the record as a dictionary to the mongodb collection
-                    result = collection.delete_one(record_to_delete_query)
+                    # if field has only unique values
+                    if field_is_unique:
+                        # attempt to delete a single record from the collection
+                        result = collection.delete_one(record_to_delete_query)
+                    # the field may have duplicates in other records
+                    else:
+                        # attempt to delete multiple records from the collection
+                        result = collection.delete_many(record_to_delete_query)
                     # log to console results of deleting records to collection
-                    log.info(f"[Multiple records inserted: {result}]")
+                    log.info(f"[Multiple records deleted: {result}]")
             # if the user wants to close the mongo db connection after retreiving the data
             if close_connection:
                 # close the connection to mongoDB
                 client.close()
             # return the results of the upload
             return result
+        # exception block - error deleting records from mongodb collection
         except Exception as e:
-            # log error when attempting to upload file to s3 bucket
-            log.exception(f"[Error initiating mongo client connection]")
+            # log error when attempting to delete records from mongodb collection
+            log.exception(f"[Error deleting records from mongodb collection...{e}]")
+
+    def update_dataframe_in_mongodb_collection(self, df, client, db, collection, field = None, close_connection = False):
+        """
+        Description: upload a refined dataframe to perform an update on every field of every record in the mongodb collection,
+        can add in the future to only perform an update on a subset of fields.
+        can also add update on single field and value to use update_many(filter_query, update_data)
+        add a tracker variable to keep track of updated records.
+
+        Parameters:
+        client              - MongoClient connection
+        db                  - string, database name in mongodb
+        field               - string, unique id column used to identify the updating records
+        collection          - string, collection name in database to update records
+        close_connection    - boolean, default to false, true to close mongodb connection
+
+        Return: result from upload of records, single record upload will return id
+        """
+        # try except block deleting records from a mongodb collection based on single column value pair
+        try:
+            # loop through each row  of dataframe to update independelty,
+            # assumes update key is unique so cannot use update_many
+            for index, row in df.iterrows():
+                # create dictionary to identify a record using a field and value pair to update other fields on same record
+                filter_query = {field: row[field]}
+                # remove the id field and use all other fields on the row to create a dictionary
+                update_dict = row.drop(field).to_dict()
+                # create update call dictionary with primary key = '$set'
+                update_data = {'$set': update_dict}
+                # attempt to update a single record in the mongo db collection
+                result = collection.update_one(filter_query, update_data)
+                # log to console results of deleting record to collection
+                log.info(f"[Record updated based on field value pair {field} : {row[field]}; results: {result}]")
+            # if the user wants to close the mongo db connection after retreiving the data
+            if close_connection:
+                # close the connection to mongoDB
+                client.close()
+            # return the results of the upload
+            return result
+        # exception block - error updating records in mongodb collection
+        except Exception as e:
+            # log error when attempting to update records in mongodb collection
+            log.exception(f"[Error updating records in mongodb collection...{e}]")
 
 class Custom_Utilities:
     def __init__(self):
