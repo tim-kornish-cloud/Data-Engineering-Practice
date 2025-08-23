@@ -1049,12 +1049,18 @@ class Custom_Utilities:
 
         Return: merged dataframe
         """
-        # log to console merging of dataframe is occuring
-        log.info('[Merging dataframes...]')
-        # return merged dataframe
-        return pd.merge(left=left, right=right,
-                        how=how, left_on=left_on, right_on=right_on,
-                        suffixes=suffixes, indicator=indicator, validate=validate)
+        # try except block
+        try:
+            # log to console merging of dataframe is occuring
+            log.info('[Merging dataframes...]')
+            # return merged dataframe
+            return pd.merge(left=left, right=right,
+                            how=how, left_on=left_on, right_on=right_on,
+                            suffixes=suffixes, indicator=indicator, validate=validate)
+        # exception block - error merging dataframes
+        except Exception as e:
+            # log error when merging dataframes
+            log.exception(f"[Error merging dataframes...{e}]")
 
     def get_df_diffs(self, left, right, left_on, right_on, how ='inner', suffixes = ('_left', '_right'), indicator = True, validate = None):
         """
@@ -1074,22 +1080,28 @@ class Custom_Utilities:
 
         Return: tuple of three dataframes
         """
-        # log to console merging of dataframe is occuring
-        log.info('[Merging dataframes...]')
-        # merge the two input dataframes
-        merged_df = self.merge_dfs(left=left, right=right,
-                        how=how, left_on=left_on, right_on=right_on,
-                        suffixes=suffixes, indicator=indicator, validate=validate)
-        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in both input df
-        both_df = merged_df[merged_df["_merge"] == "both"]
-        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the left dataframe
-        left_only_df = merged_df[merged_df["_merge"] == "left_only"]
-        # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the right dataframe
-        right_only_df = merged_df[merged_df["_merge"] == "right_only"]
-        # log to console splitting of dataframe is occuring
-        log.info('Analyzing and splitting input dataframes...]')
-        # return a tuple showing records from both input df split among three new dataframes
-        return (both_df, left_only_df, right_only_df)
+        # try except block
+        try:
+            # log to console merging of dataframe is occuring
+            log.info('[Merging dataframes...]')
+            # merge the two input dataframes
+            merged_df = self.merge_dfs(left=left, right=right,
+                            how=how, left_on=left_on, right_on=right_on,
+                            suffixes=suffixes, indicator=indicator, validate=validate)
+            # separate the merged dataframe basedf on _merge value, 1 dataframe for records in both input df
+            both_df = merged_df[merged_df["_merge"] == "both"]
+            # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the left dataframe
+            left_only_df = merged_df[merged_df["_merge"] == "left_only"]
+            # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the right dataframe
+            right_only_df = merged_df[merged_df["_merge"] == "right_only"]
+            # log to console splitting of dataframe is occuring
+            log.info('Analyzing and splitting input dataframes...]')
+            # return a tuple showing records from both input df split among three new dataframes
+            return (both_df, left_only_df, right_only_df)
+        # exception block - error merging and return tuple of df diff
+        except Exception as e:
+            # log error when merging and return tuple of df diff
+            log.exception(f"[Error merging and return tuple of df diff...{e}]")
 
     def format_columns_dtypes(self, df):
         """
@@ -1103,30 +1115,36 @@ class Custom_Utilities:
 
         Return: dataframe
         """
-        # log to console updating the dataframe datatypes
-        log.info('[updating datatypes of dataframe...]')
-        # loop through each column in the dataframe to format
-        for index, col in enumerate(df.columns):
-            # confirm the loop index exists in the range of columns
-            if index < len(df.columns):
-                # check if type == int
-                if df[col].dtypes == 'int64':
-                    # set column to type int
-                    df[col] = df[col].astype(int)
-                # check if type == string, date, or object
-                if df[col].dtypes == 'object':
-                    # set column to type str
-                    df[col] = df[col].astype(str)
-                # check if type == float
-                if df[col].dtypes == 'float64':
-                    # set column to type float
-                    df[col] = df[col].astype(float)
-                # check if type == boolean
-                if df[col].dtypes == 'bool':
-                    # set column to type bool
-                    df[col] = df[col].astype(bool)
-        # return the reformatted dataframes
-        return df
+        # try except block
+        try:
+            # log to console updating the dataframe datatypes
+            log.info('[updating datatypes of dataframe...]')
+            # loop through each column in the dataframe to format
+            for index, col in enumerate(df.columns):
+                # confirm the loop index exists in the range of columns
+                if index < len(df.columns):
+                    # check if type == int
+                    if df[col].dtypes == 'int64':
+                        # set column to type int
+                        df[col] = df[col].astype(int)
+                    # check if type == string, date, or object
+                    if df[col].dtypes == 'object':
+                        # set column to type str
+                        df[col] = df[col].astype(str)
+                    # check if type == float
+                    if df[col].dtypes == 'float64':
+                        # set column to type float
+                        df[col] = df[col].astype(float)
+                    # check if type == boolean
+                    if df[col].dtypes == 'bool':
+                        # set column to type bool
+                        df[col] = df[col].astype(bool)
+            # return the reformatted dataframes
+            return df
+        # exception block - error formatting dataframe column datatypes
+        except Exception as e:
+            # log error when formatting dataframe column datatypes
+            log.exception(f"[Error formatting dataframe column datatypes...{e}]")
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
         """
@@ -1139,21 +1157,27 @@ class Custom_Utilities:
 
         Return: None, write dataframes to files
         """
-        # create instance of ExcelWrite to add sheets creted from dataframes
-        writer = pd.ExcelWriter(file_name)
-        # loop through list of multiple DataFrame
-        # each dataframe will be its own sheet on the document
-        log.info('[writing each sheet to excelfile]')
-        # loop through the list of each dataframe to write to a sheet
-        for index, df in enumerate(dfs):
-            # log to console what sheet is being written
-            log.info('[writing sheet to excel file: ' + str(sheet_names[index]) + ']')
-            # write the individual dataframe to it's associated sheet
-            df.to_excel(writer, sheet_names[index], index = False)
-        # log finished looping and now writing file out
-        log.info('[saving file to output location]')
-        # save the file
-        writer.save()
+        # try except block
+        try:
+            # create instance of ExcelWrite to add sheets creted from dataframes
+            writer = pd.ExcelWriter(file_name)
+            # loop through list of multiple DataFrame
+            # each dataframe will be its own sheet on the document
+            log.info('[writing each sheet to excelfile]')
+            # loop through the list of each dataframe to write to a sheet
+            for index, df in enumerate(dfs):
+                # log to console what sheet is being written
+                log.info('[writing sheet to excel file: ' + str(sheet_names[index]) + ']')
+                # write the individual dataframe to it's associated sheet
+                df.to_excel(writer, sheet_names[index], index = False)
+            # log finished looping and now writing file out
+            log.info('[saving file to output location]')
+            # save the file
+            writer.save()
+        # exception block - error writing list of dataframe to excel sheets
+        except Exception as e:
+            # log error when writing list of dataframe to excel sheets
+            log.exception(f"[Error writing list of dataframe to excel sheets...{e}]")
 
     def encode_df(self, df, encoding = 'unicode_escape', decoding = 'utf-8'):
         """
@@ -1166,10 +1190,16 @@ class Custom_Utilities:
 
         Return: pandas.DataFrame
         """
-        # log to console, beginning encoding data in dataframe
-        log.info('[encoding query results in DataFrames]')
-        # return the encoded data for strings
-        return df.map(lambda x : x.encode(encoding).decode(decoding) if isinstance(x, str) else x)
+        # try except block
+        try:
+            # log to console, beginning encoding data in dataframe
+            log.info('[encoding query results in DataFrames]')
+            # return the encoded data for strings
+            return df.map(lambda x : x.encode(encoding).decode(decoding) if isinstance(x, str) else x)
+        # exception block - error encoding dataframe values
+        except Exception as e:
+            # log error when encoding dataframe values
+            log.exception(f"[Error encoding dataframe values...{e}]")
 
     def add_sequence(self, df, group_fields, new_field, changing_fields = None, base_value = 10, increment_value = 10, sort = True, incremental_log = 1000):
         """
@@ -1188,107 +1218,118 @@ class Custom_Utilities:
 
         Return: df              - DataFrame with an added column with value changing sequence
         """
-        # sort the values of the data frame by the sort fields selected
-        if sort:
-            # log to console beginning sorted
-            log.info('[Sorting DataFrame before generating list.]')
-            # create list of fields to sort the dataframe by
-            sort_fields = group_fields.append(changing_fields)
-            # sort the dataframe based on the sort fields
-            df.sort_values(sort_fields, inplace = True)
-        # log to console what the new field is called that will hold the sequence
-        log.info('[generating sequence for: ' + new_field + ']')
-        # if there is no field declared how to sequence the group
-        if changing_fields == None:
-            # iterrate throught the dataframe row by row
-            for index, row in df.iterrows():
-                # every 10,000 rows add a log output for timekeeping
-                if index % incremental_log == 0:
-                    # log to console a timestamp and number of rows processed
-                    log.info('[rows processed: ' + str(index) + ']')
-                # if the current row's group is not the same as the previous row's group
-                if int(index) == 0 or not (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])):
-                    # start the sequence again based on the starting base value
-                    df.loc[index, new_field] = base_value
-                # the current row's group matches the last row's group values
-                else:
-                    # increment the value showing this row's group matches the previous row's group
-                    df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
-        # there is a declared field to sequence the group fields,
-        # show what column to sequence the groups by
-        else:
-            # iterrate through the dataframe row by row
-            for index, row in df.iterrows():
-                # if on the first row
-                if int(index) == 0:
-                    # set the bast value to begin the sequence on
-                    df.loc[index, new_field] = base_value
-                # any row after the first row
-                else:
-                    # the current row group value is the same as the previous row, increment the sequence value
-                    if (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])) and not (df.loc[int(index) - 1, changing_fields].equals(df.loc[index, changing_fields])):
-                        # increment the sequence value in the new column
-                        df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
-                    # the current row is part of a new group than the previous row
-                    else:
-                        # start the sequence over again on the current row
+        # try except block
+        try:
+            # sort the values of the data frame by the sort fields selected
+            if sort:
+                # log to console beginning sorted
+                log.info('[Sorting DataFrame before generating list.]')
+                # create list of fields to sort the dataframe by
+                sort_fields = group_fields.append(changing_fields)
+                # sort the dataframe based on the sort fields
+                df.sort_values(sort_fields, inplace = True)
+            # log to console what the new field is called that will hold the sequence
+            log.info('[generating sequence for: ' + new_field + ']')
+            # if there is no field declared how to sequence the group
+            if changing_fields == None:
+                # iterrate throught the dataframe row by row
+                for index, row in df.iterrows():
+                    # every 10,000 rows add a log output for timekeeping
+                    if index % incremental_log == 0:
+                        # log to console a timestamp and number of rows processed
+                        log.info('[rows processed: ' + str(index) + ']')
+                    # if the current row's group is not the same as the previous row's group
+                    if int(index) == 0 or not (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])):
+                        # start the sequence again based on the starting base value
                         df.loc[index, new_field] = base_value
-        # return the dataframe with the added column
-        return df
+                    # the current row's group matches the last row's group values
+                    else:
+                        # increment the value showing this row's group matches the previous row's group
+                        df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
+            # there is a declared field to sequence the group fields,
+            # show what column to sequence the groups by
+            else:
+                # iterrate through the dataframe row by row
+                for index, row in df.iterrows():
+                    # if on the first row
+                    if int(index) == 0:
+                        # set the bast value to begin the sequence on
+                        df.loc[index, new_field] = base_value
+                    # any row after the first row
+                    else:
+                        # the current row group value is the same as the previous row, increment the sequence value
+                        if (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])) and not (df.loc[int(index) - 1, changing_fields].equals(df.loc[index, changing_fields])):
+                            # increment the sequence value in the new column
+                            df.loc[index, new_field] = df.loc[int(index) - 1, new_field] + increment_value
+                        # the current row is part of a new group than the previous row
+                        else:
+                            # start the sequence over again on the current row
+                            df.loc[index, new_field] = base_value
+            # return the dataframe with the added column
+            return df
+        # exception block - error creating sequence column for unique members of a group
+        except Exception as e:
+            # log error creating sequence column for unique members of a group
+            log.exception(f"[Error generating sequence for members of groups...{e}]")
 
     def generate_sql_list_from_df_column(self, df, column, output_file_name = None, return_line = False, output = 'file'):
         """
         Description: generate a string list of values from a dataframe column to inject into a query
         Parameters:
 
-        df                      -
-        column                  -
-        output_file_name        -
-        return_line             -
-        output                  -
+        df                      - dataframe to generate sql list from
+        column                  - string, column name to generate sql list from
+        output_file_name        - string, file location to write sql list to
+        return_line             - bool, start a new line for every value, or generate the list all on a single line.
+        output                  - string, accepted values are: 'file', 'string'
 
         Return:                 - string, sql string formatted list of values
         """
-
-        # begin the string list that will be return by the funciont
-        sql_string = "("
-        # drop duplicate from the dataframe column based on a subset before generating the SQL list
-        unique_df = df.drop_duplicates(subset = [column])
-        # loop through the rows of the dataframe to add values to the stirng
-        for index, row in unique_df.iterrows():
-            # if the string should start a new line after every
+        # try except block
+        try:
+            # begin the string list that will be return by the funciont
+            sql_string = "("
+            # drop duplicate from the dataframe column based on a subset before generating the SQL list
+            unique_df = df.drop_duplicates(subset = [column])
+            # loop through the rows of the dataframe to add values to the stirng
+            for index, row in unique_df.iterrows():
+                # if the string should start a new line after every
+                if return_line:
+                    # add new value to the sql string on a new line every entry
+                    sql_string  = sql_string + "'" + str(row[column]) + "',\n"
+                # generate every value of the list on a single line
+                else:
+                    # add new value to the sql string on the same line
+                    sql_string  = sql_string + "'" + str(row[column]) + "',"
+            # at the end of all the values added, add the closing parenthesis
+            # remove ending new line if used
             if return_line:
-                # add new value to the sql string on a new line every entry
-                sql_string  = sql_string + "'" + str(row[column]) + "',\n"
-            # generate every value of the list on a single line
+                # remove the new line and add ending parenthesis
+                sql_string = sql_string[:-2] + ")"
+            # since all value are on same line, no need to trim extra new line in string
             else:
-                # add new value to the sql string on the same line
-                sql_string  = sql_string + "'" + str(row[column]) + "',"
-        # at the end of all the values added, add the closing parenthesis
-        # remove ending new line if used
-        if return_line:
-            # remove the new line and add ending parenthesis
-            sql_string = sql_string[:-2] + ")"
-        # since all value are on same line, no need to trim extra new line in string
-        else:
-            # add ending parenthesis to sql string list
-            sql_string = sql_string[:-1] + ")"
-        # if the sql string is to be written to a file for further use
-        if output == 'file' and output_file_name != None:
-            # log to console, attempting output sql string to a file
-            log.info('[Converting DataFrame Column to SQL List in text file: \n ' + output_file_name + ' ]\n')
-            # open the file in write mode
-            with open(output_file_name, 'w') as file:
-                # write the sql string to the file and close once done
-                file.write(sql_string)
-        # if the sql string should be returned instead of written to file
-        elif output == 'string':
-            # retun sql string as list
-            return sql_string
-        # if don't write sql string to file, and don't return the string
-        else:
-            # do nothing
-            return None
+                # add ending parenthesis to sql string list
+                sql_string = sql_string[:-1] + ")"
+            # if the sql string is to be written to a file for further use
+            if output == 'file' and output_file_name != None:
+                # log to console, attempting output sql string to a file
+                log.info('[Converting DataFrame Column to SQL List in text file: \n ' + output_file_name + ' ]\n')
+                # open the file in write mode
+                with open(output_file_name, 'w') as file:
+                    # write the sql string to the file and close once done
+                    file.write(sql_string)
+            # if the sql string should be returned instead of written to file
+            elif output == 'string':
+                # retun sql string as list
+                return sql_string
+            # if don't write sql string to file, and don't return the string
+            else:
+                # do nothing
+                return None
+        # exception block - error creating sql list
+        except Exception as e:
+            # log error creating sql list from dataframe column
+            log.exception(f"[Error generating sql list from dataframe column...{e}]")
 
     def now(self, ts_format='%Y-%m-%d__%H-%M-%S'):
         """
@@ -1299,5 +1340,11 @@ class Custom_Utilities:
 
         Return:     - datetime of right now down to the second.
         """
-        # return datetime of right now
-        return datetime.fromtimestamp(time.time()).strftime(ts_format)
+        # try except block
+        try:
+            # return datetime of right now
+            return datetime.fromtimestamp(time.time()).strftime(ts_format)
+        # exception block - error
+        except Exception as e:
+            # log error when
+            log.exception(f"[Error returning a datetime string of now...{e}]")
