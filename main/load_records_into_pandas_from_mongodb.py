@@ -39,45 +39,39 @@ mock_df = pd.read_csv(input_csv_file)
 # select only 10 records
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 
-# set s3 bucket name to upload csv to
-s3_bucket_name = "pandas-interface-bucket"
-# set name of the csv file being uploaded to s3 bucket
-filename = "MOCK_DATA_Multi_Data_Types_subset.csv"
-
-#retrieve mongodb uri
+# retrieve mongodb uri
 mongodb_uri = Cred.get_uri(dbms = database, env = environment)
 
-#create client connection with mongodb
+# create client connection with mongodb
 client = MongoDB_Utils.create_mongo_client(uri = mongodb_uri)
-#print(client)
 
-list_db = client.list_databases()
-#print(list_db)
-
-
-#mongodb database name
+# mongodb database name
 mongo_db_name = "data_engineering"
 # create database variable
 mongo_db = client[mongo_db_name]
+
 # mongodb database collection name
-mongo_collection_name = "accounts_test_1"
+mongo_collection_name = "accounts_test_2"
 # create collection variable
 mongo_collection = mongo_db[mongo_collection_name]
 
-print(mongo_collection.find_one())
-
+# query a subset of records using the field SLC__c
 query_field = "SLA__c"
+# query a subset of records where the field SLC__c = "gold"
 query_value = "gold"
-query = "{SLA__c : \"gold\"}"
 
-accounts_df = MongoDB_Utils.retrieve_dataframe_from_mongodb_collection(client, mongo_db, mongo_collection, query_field, query_value, close_connection = False)
+# query records from the mongodb collection with the above field value pair
+accounts_df = MongoDB_Utils.query_dataframe_from_mongodb_collection(client, mongo_db, mongo_collection, query_field, query_value, close_connection = False)
 
-
-print(accounts_df.head())
+# print out the number of records queried
 print(len(accounts_df))
-
-accounts_df = MongoDB_Utils.retrieve_dataframe_from_mongodb_collection(client, mongo_db, mongo_collection)
-
-print(accounts_df)
+# print out the first 5 queried records of the entire collection
 print(accounts_df.head())
+
+# query all records from the mongodb collection, leaving the field value pair set to none
+accounts_df = MongoDB_Utils.query_dataframe_from_mongodb_collection(client, mongo_db, mongo_collection)
+
+# print out the number of records queried
 print(len(accounts_df))
+# print out the first 5 queried records of the entire collection
+print(accounts_df.head())
