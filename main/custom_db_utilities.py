@@ -802,9 +802,22 @@ class EC2_S3_Utilities:
 
 class MongoDB_Utilities:
     def __init__(self):
-        """Constructor Parameters:
-           - currently no customization used.
         """
+        Constructor Parameters:
+        - currently no customization used.
+
+        list of ETL functions for MongoDB
+        # bulk_write(), as long as UpdateMany or DeleteMany are not included.
+        # delete_one()
+        # insert_one()
+        # insert_many()
+        # replace_one()
+        # update_one()
+        # find_one_and_delete()
+        # find_one_and_replace()
+        # find_one_and_update()
+        """
+
     def create_mongo_client(self, uri = "mongodb://localhost:27017/"):
         """
         Description: connect to a mongodb database and return a client
@@ -828,96 +841,134 @@ class MongoDB_Utilities:
             # log error when attempting to upload file to s3 bucket
             log.exception(f"[Error initiating mongo client connection]")
 
-    def insert_dataframe_into_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = True):
+    def insert_dataframe_into_mongodb_collection(self, df, client, db, collection, field = None, value = None, close_connection = True):
         """
         Description: connect to a mongodb database and return a client
         - in the future may add other paramters for non-localhost
 
         Parameters:
-        client,
-        db,
-        collection,
-        field,
-        value,
-        close_connection = Tru
+        client              - MongoClient connection
+        db                  - string, database name in mongodb
+        collection          - string, collection name in database to insert records
+        close_connection    - boolean, default to false, true to close mongodb connection
 
-        Return: none
+        Return: result from upload of records, single record upload will return id
         """
         # try except block on connecting to a mongodb client
         try:
-            if field is not None and value is not None:
-                cursor = collection.find({field : value})
+            # if there is only 1 record in the dataframe to insert
+            if len(df) == 1:
+                # convert the dataframe to a dictionary
+                record_to_insert = df.to_dict("records")[0]
+                # attempt to insert the record as a dictionary to the mongodb collection
+                result = collection.insert_one(record_to_insert)
+                # log to console results of inserting record to collection
+                log.info(f"[Single record inserted with ID: {result.inserted_id}]")
+            # if the dataframe has more than 1 record to upload
             else:
-                cursor = collection.find()
-            # db = client['your_database_name']  # Replace with your database name
-            # collection = db['your_collection_name']
-            # data_dict = df.to_dict("records")
-            #c ollection.insert_many(data_dict)
+                # convert the dataframe to a list of dictionaries
+                records_to_insert = df.to_dict("records")
+                # attempt to upload the list of dictionaries
+                result = collection.insert_many(records_to_insert)
+                # log the results of the upload to the console
+                log.info(f"[Multiple records inserted: {result}]")
+            # if the user wants to close the mongo db connection after retreiving the data
+            if close_connection:
+                # close the connection to mongoDB
+                client.close()
+            # return the results of the upload
+            return result
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
             log.exception(f"[Error initiating mongo client connection]")
 
-        # db = client['your_database_name']  # Replace with your database name
-        # collection = db['your_collection_name']
-        # data_dict = df.to_dict("records")
-        #c ollection.insert_many(data_dict)
-
-        #bulk_write(), as long as UpdateMany or DeleteMany are not included.
-
-# delete_one()
-#
-# insert_one()
-#
-# insert_many()
-#
-# replace_one()
-#
-# update_one()
-#
-# find_one_and_delete()
-#
-# find_one_and_replace()
-#
-# find_one_and_update()
-
-    def retrieve_dataframe_from_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = True):
+    def retrieve_dataframe_from_mongodb_collection(self, client, db, collection, field = None, value = None, close_connection = False):
         """
         Description: connect to a mongodb database and return a client
         - in the future may add other paramters for non-localhost
 
         Parameters:
-        client,
-        db,
-        collection,
-        field,
-        value,
-        close_connection = Tru
+        client              -
+        db                  -
+        collection          -
+        field               -
+        value               -
+        close_connection    -
+
 
         Return: MongoClient
         """
         # try except block on connecting to a mongodb client
         try:
+            # if both field and value are not none, for records matching this pair
             if field is not None and value is not None:
+                # find all records in collection with field-value pair
                 cursor = collection.find({field : value})
+            # else - if field and value are none, query all records
             else:
-                print("else")
+                # find all records in the collection
                 cursor = collection.find({})
-            #print(cursor)
-            #print(list(cursor))
-
+            # convert the results of the query into a dataframe
             df = pd.DataFrame(list(cursor))
-            #print(df)
+            # if the user wants to close the mongo db connection after retreiving the data
             if close_connection:
-                # Close the MongoDB connection
+                # close the connection to mongoDB
                 client.close()
-            #return the generated dateframe from the mongodb collection
+            # log results converted to dataframe
+            log.info(f"[Records converted to a pandas dataframe]")
+            # return the generated dateframe from the mongodb collection
             return df
         except Exception as e:
             # log error when attempting to upload file to s3 bucket
             log.exception(f"[Error initiating mongo client connection]")
 
-    def delete_dataframe_from_mongodb_collection(self, df):
-        print("update me")
+    def delete_dataframe_from_mongodb_collection(self, df, client, db, collection, field = None, value = None, close_connection = False):
+        """
+        Description: delete a single record or a list of records based on a single condition
+        add functionality to with df.iterrows(): to delete based on condition in every row of dataframe
+        need new parameter for looping delete on multiple conditions
+
+        Parameters:
+        client              - MongoClient connection
+        db                  - string, database name in mongodb
+        field               - string, unique id column used to identify the deleting records
+        Value               - string, unique id value used to identify the deleting records
+        collection          - string, collection name in database to insert records
+        close_connection    - boolean, default to false, true to close mongodb connection
+
+        Return: result from upload of records, single record upload will return id
+        """
+        # try except block on connecting to a mongodb client
+        try:
+            # if deleting records based on single condition
+            if field is not None and value is not None:
+                # create query dict from the record and field
+                record_to_delete_query = {field : value}
+                # attempt to insert the record as a dictionary to the mongodb collection
+                result = collection.delete_many(record_to_delete_query)
+                # log to console results of deleting record to collection
+                log.info(f"[Single record deleted with ID: {result}]")
+            # loop through dataframe andf delete one record ata a time based on column and row value
+            else:
+                # convert the dataframe to a dictionary
+                record_to_delete = df.to_dict("records")
+                # loop through each row
+                for index, row in df.iterrows():
+                    # create query dict from the record and field
+                    record_to_delete_query = {field : row[field]}
+                    # attempt to insert the record as a dictionary to the mongodb collection
+                    result = collection.delete_one(record_to_delete_query)
+                    # log to console results of deleting records to collection
+                    log.info(f"[Multiple records inserted: {result}]")
+            # if the user wants to close the mongo db connection after retreiving the data
+            if close_connection:
+                # close the connection to mongoDB
+                client.close()
+            # return the results of the upload
+            return result
+        except Exception as e:
+            # log error when attempting to upload file to s3 bucket
+            log.exception(f"[Error initiating mongo client connection]")
 
 class Custom_Utilities:
     def __init__(self):
@@ -1133,13 +1184,13 @@ class Custom_Utilities:
         Description: generate a string list of values from a dataframe column to inject into a query
         Parameters:
 
-        df,
-        column,
-        output_file_name = None,
-        return_line = False,
-        output
+        df                      -
+        column                  -
+        output_file_name        -
+        return_line             -
+        output                  -
 
-        Return:     - string, sql string formatted list of values
+        Return:                 - string, sql string formatted list of values
         """
 
         # begin the string list that will be return by the funciont
