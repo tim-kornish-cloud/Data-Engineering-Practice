@@ -37,42 +37,15 @@ input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Multi_Data_Types.csv"
 mock_df = pd.read_csv(input_csv_file)
 
 # select only 10 records
-df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
+df_to_delete = mock_df.iloc[record_start:record_start+num_of_records]
 
-# set s3 bucket name to upload csv to
-s3_bucket_name = "pandas-interface-bucket"
-# set name of the csv file being uploaded to s3 bucket
-filename = "MOCK_DATA_Multi_Data_Types_subset.csv"
-
-#retrieve mongodb uri
+# retrieve mongodb uri
 mongodb_uri = Cred.get_uri(dbms = database, env = environment)
 
-#create client connection with mongodb
+# create client connection with mongodb
 client = MongoDB_Utils.create_mongo_client(uri = mongodb_uri)
-#print(client)
 
-list_db = client.list_databases()
-#print(list_db)
-
-record_field_override = "SLA__c"
-record_value_override = "platinum"
-
-df_to_upload[record_field_override] = record_value_override
-
-record_field_override = "Account_Number_External_ID__c"
-record_value_override = "978151df-ec7b-4e3b-8109-02a139ddb7f0"
-
-df_to_upload[record_field_override] = record_value_override
-
-record_field_override = "AccountNumber"
-record_value_override = "1001"
-
-df_to_upload[record_field_override] = record_value_override
-
-record_to_insert = df_to_upload.to_dict("records")[0]
-print(record_to_insert)
-
-#mongodb database name
+# mongodb database name
 mongo_db_name = "data_engineering"
 # create database variable
 mongo_db = client[mongo_db_name]
@@ -81,10 +54,9 @@ mongo_collection_name = "accounts_test_2"
 # create collection variable
 mongo_collection = mongo_db[mongo_collection_name]
 
-#results = MongoDB_Utils.insert_dataframe_into_mongodb_collection(record_to_insert)
-results = MongoDB_Utils.delete_dataframe_from_mongodb_collection(df_to_upload, client, mongo_db , mongo_collection)
+# delete the records from mongodb collection and return the results of the deletion
+results = MongoDB_Utils.delete_dataframe_from_mongodb_collection(df_to_delete, client, mongo_db , mongo_collection, field = "SLASerialNumber__c")
 
-# Access the inserted_id
+# print the results of the delete operation, currently will only return the last operation,
+# can add an array that appends all results when deleting multiple records
 print(f"Document inserted with ID: {results}")
-
-print(mongo_collection.find_one())
