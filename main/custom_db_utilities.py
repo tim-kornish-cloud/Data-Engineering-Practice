@@ -45,6 +45,7 @@ class Salesforce_Utilities:
 
            can add login credentials as instance variables to utilize in functions
         """
+
     def login_to_salesForce(self, username, password, security_token, environment = ''):
         """
         Description: log into a Salesforce or and return salesforce client
@@ -91,17 +92,17 @@ class Salesforce_Utilities:
         # try except block
         try:
             # log status to console of querying Salesforce
-            log.info('[Querying Salesforce orgs, include deleted records: ' + str(include_deleted) + ']')
+            log.info(f"[Querying Salesforce orgs, include deleted records: {str(include_deleted)}]"")
             # query salesforce and return results in json format
             query_results = sf.query_all(query, include_deleted = include_deleted)
             # return the json query results
             return query_results
-        # exception block - error
+        # exception block - error querying Salesforce orgs
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when querying Salesforce orgs
+            log.exception(f"[Error querying Salesforce orgs...{e}]")
 
-    def format_date_to_salesforce_date(self, df, columns, format = '%m/%d/%Y'):
+    def format_date_to_salesforce_date(self, df, columns, format = "%m/%d/%Y"):
         """
         Description: format specified columns in a dataframe to be compatible with Salesforce
         Parameters:
@@ -127,13 +128,13 @@ class Salesforce_Utilities:
                     # format the column in this loop of the list
                     return_df[column] = pd.to_datetime(df[column], format = format).dt.normalize().apply(lambda x : str(x)[:10])
                     # replace blanks due to reformat
-                    return_df.replace({column : {'NaT' : None, '' : None}}, inplace = True)
+                    return_df.replace({column : {"NaT" : None, "" : None, " " : None}}, inplace = True)
             # return the reformatted dataframe
             return return_df
-        # exception block - error
+        # exception block - error formatting date column to Salesforce format
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when formatting date column to Salesforce format
+            log.exception(f"[Error formatting date column to Salesforce format...{e}]")
 
     def load_query_into_dataframe(self, query_results):
         """
@@ -151,10 +152,10 @@ class Salesforce_Utilities:
             # use function to process query since it
             # has log to detect if query uses lookups or not
             return Utilities.load_query_with_lookups_into_dataframe(self, query_results)
-        # exception block - error
+        # exception block - error loading query results into dataframe
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when loading query results into dataframe
+            log.exception(f"[Error loading query results into dataframe...{e}]")
 
     def flatten_lookup_fieldname_hierarchy(self, df, continue_loop = False, use_subset = True, subset_size = 1000):
         """
@@ -177,7 +178,7 @@ class Salesforce_Utilities:
             # loop through each column in the dataframe
             for column in df.columns:
                 # log to console which column is being checked
-                log.info('[Checking if column: ' + column + ' is a lookup]')
+                log.info(f"[Checking if column: {column} is a lookup]")
                 # use batches instead of the entire dataset
                 if use_subset:
                     # only check a batch size of data for lookups (only batch number of rows)
@@ -194,10 +195,10 @@ class Salesforce_Utilities:
                     # create a temporary new dataframe with column count = 1
                     new_df = df[column].apply(pd.Series)
                     # remove attributes columns if exists to avoid parsing issue.
-                    if 'attributes' in new_df.columns:
+                    if "attributes" in new_df.columns:
                         # drop attributes columns,
                         # creates duplicate with original layer if left in
-                        new_df.drop('attributes', axis = 1, inplace = True)
+                        new_df.drop("attributes", axis = 1, inplace = True)
                     # modify name of unnested column
                     new_df = new_df.add_prefix(column + ".")
                     # add unnested column to the dataframe
@@ -221,10 +222,10 @@ class Salesforce_Utilities:
             else:
                 # return results of query with every columns properly separated.
                 return df
-        # exception block - error
+        # exception block - error flattening lookup fieldname hierarchy
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when flattening lookup fieldname hierarchy
+            log.exception(f"[Error flattening lookup fieldname hierarchy...{e}]")
 
     def load_query_with_lookups_into_dataframe(self, query_results, use_subset = True, subset_size = 1000):
         """
@@ -238,50 +239,50 @@ class Salesforce_Utilities:
         # try except block
         try:
             # log info to console
-            log.info('[loading query results into DataFrames]')
+            log.info("[loading query results into DataFrames]")
             # load query results json into a diction, then convert the dictionary
             # to a pandas Dataframe
-            df = pd.DataFrame.from_dict(dict(query_results)['records'])
+            df = pd.DataFrame.from_dict(dict(query_results)["records"])
             # check if there are nested object fields in the query results
-            if 'attributes' in df.columns:
+            if "attributes" in df.columns:
                 # drop this column to avoid issue with unnesting the lookup fields
-                 df.drop(['attributes'], axis = 1, inplace = True)
+                 df.drop(["attributes"], axis = 1, inplace = True)
             # log to console
-            log.info('[Unnesting columns for DF with: ' + str(len(df)) + ' records]')
+            log.info(f"[Unnesting columns for DF with: {str(len(df))} records]")
             # unnest lookup fields from query onto a flat array and return as a dataframe
             df = self.flatten_lookup_fieldname_hierarchy(df, use_subset = use_subset, subset_size = subset_size)
             # where a notnull NaN value is found, replace with None
             df = df.where((pd.notnull(df)), None)
             # log status of unnesting lookups into a new dataframe
-            log.info('[loaded ' + str(len(df)) + ' records into DataFrame]')
+            log.info(f"[loaded  {str(len(df))}  records into DataFrame]")
             # return the query results as a pandas dataframe
             return df
-        # exception block - error
+        # exception block - error loading query with lookups into dataframe
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when loading query with lookups into dataframe
+            log.exception(f"[Error loading query with lookups into dataframe...{e}]")
 
     def reformat_dataframe_to_salesforce_records(self, df):
         """
         Description: Reformat df into list of dicts where each dict is a SF record
         Parameters:
 
-        df - DataFrame, Salesforce records
+        df                  - DataFrame, Salesforce records
 
-        Return: sf_records - list of dicts, each dict is a single layer deep, no nesting.
+        Return: sf_records  - list of dicts, each dict is a single layer deep, no nesting.
         """
         # try except block
         try:
             # log to console, reformatting records to json format
-            log.info('[Reformatting data for SF JSON]')
+            log.info("[Reformatting data for SF JSON]")
             # conver the dataframe to a json dictionary
-            sf_records = df.to_dict('records')
+            sf_records = df.to_dict("records")
             # return the records in salesforce format
             return sf_records
-        # exception block - error
+        # exception block - error reformatting dataframe to salesforce json records
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when reformatting dataframe to salesforce json records
+            log.exception(f"[Error reformatting dataframe to salesforce json records...{e}]")
 
     def upload_dataframe_to_salesforce(self, sf, df, object_name, dml_operation, success_file = None, fallout_file = None, batch_size = 1000, external_id_field=None, time_delay = None):
         """
@@ -320,7 +321,7 @@ class Salesforce_Utilities:
                 # record how many records are going to be attempted
                 records_count = len(records_to_commit)
                 # log to console status
-                log.info('[Starting DML.. records to ' + dml_operation + ': ' + str(records_count) + ']')
+                log.info(f"[Starting DML.. records to {dml_operation} : {str(records_count)} ]")
                 # perform as many loops as necessary to upload the records on the selected batch size.
                 for index in range(0, records_count, batch_size):
                     # if there are more records to upload after the current batch upload a full batch,
@@ -337,18 +338,18 @@ class Salesforce_Utilities:
                     data_df = pd.DataFrame(data)
                     # convert the results from the upload into a pandas dataframe
                     # add a suffix to all new columns created from the upload
-                    results_df = pd.DataFrame(results).add_prefix('RESULTS_')
+                    results_df = pd.DataFrame(results).add_prefix("RESULTS_")
                     # split the results into two group, passing and fallout
                     # passing is success = true
-                    passing = passing + len(results_df[results_df['RESULTS_success'] == True])
+                    passing = passing + len(results_df[results_df["RESULTS_success"] == True])
                     # fallout is success = false
-                    fallout = fallout + len(results_df[results_df['RESULTS_success'] == False])
+                    fallout = fallout + len(results_df[results_df["RESULTS_success"] == False])
                     # concat the results of this batch to the dataframe the holds the results of the entire df being batch
                     results_df = pd.concat([data_df, results_df.reindex(data_df.index)], axis = 1)
                     # upload the resulting dataframe into an array
                     results_list.append(results_df)
                     # log the status of how many records passed vs failed
-                    log.info('[' + str(passing) + '/' + str(records_count) + ' rows of data - ' + dml_operation + ' rows of data loaded, failed rows:' + str(fallout) + '...]')
+                    log.info(f"[{str(passing)}/{str(records_count)} rows of data - {dml_operation} rows of data loaded, failed rows: {str(fallout)}...]")
                     # if using a time delay between uploads, extecute the delay here at the end of the loop
                     if time_delay != None:
                         # time delay
@@ -356,33 +357,33 @@ class Salesforce_Utilities:
                 # full list of every record attempted
                 results_df = pd.concat(results_list)
                 # split the results int passing and fallout again
-                # passing : 'RESULTS_success' == True
-                passing_df = results_df[results_df['RESULTS_success'] == True]
-                # fallout : 'RESULTS_success' == False
-                fallout_df = results_df[results_df['RESULTS_success'] == False]
+                # passing : "RESULTS_success" == True
+                passing_df = results_df[results_df["RESULTS_success"] == True]
+                # fallout : "RESULTS_success" == False
+                fallout_df = results_df[results_df["RESULTS_success"] == False]
 
                 # if a success file pathway is added, write the success datafame to the csv
                 if success_file != None:
                     # open the file location in write mode
-                    with open(success_file, mode = 'w', newline = '\n') as file:
+                    with open(success_file, mode = "w", newline = "\n") as file:
                         # write the dataframe to the file using a commma as the delimeter
-                        passing_df.to_csv(file, sep = ',', index = False)
+                        passing_df.to_csv(file, sep = ",", index = False)
                 # if a fallout file pathway is added, write the fallout datafame to the csv
                 if fallout_file != None:
                     # open the file location in write mode
-                    with open(fallout_file, mode = 'w', newline = '\n') as file:
+                    with open(fallout_file, mode = "w", newline = "\n") as file:
                         # write the dataframe to the file using a commma as the delimeter
-                        fallout_df.to_csv(file, sep = ',', index = False)
+                        fallout_df.to_csv(file, sep = ",", index = False)
                 # return both the passing and fallout dataframes
                 return [passing_df, fallout_df]
             # no records are in the dataframe, nothing to process
             else:
                 # log to console, nothing included in dataframe to process
-                log.info('[No Records to process]')
-        # exception block - error
+                log.info("[No Records to process]")
+        # exception block - error uploading dataframe of records to salesforce
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when uploading dataframe of records to salesforce
+            log.exception(f"[Error uploading dataframe of records to salesforce...{e}]")
 
 class MSSQL_Utilities:
     def __init__(self):
@@ -392,16 +393,18 @@ class MSSQL_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_mssql(self,  server = None, database = '', username = None, password = None, use_windows_authentication = True, driver = '{ODBC Driver 17 for SQL Server}',  trusted_connection = 'yes'):
+    def login_to_mssql(self, driver = "{ODBC Driver 17 for SQL Server}", server = None, database = "", username = None, password = None, use_windows_authentication = True, trusted_connection = "yes"):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
 
-        driver          - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
-        server          - IP address of server, I.E. 127.0.0.1
-        database        - Database name
-        Username        - string, MSSQL server Username
-        Password        - string, MSSQL server Password
+        driver                      - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
+        server                      - string, IP address of server, I.E. 127.0.0.1
+        database                    - string, Database name
+        Username                    - string, MSSQL server Username
+        Password                    - string, MSSQL server Password
+        use_windows_authentication  - bool, use window authentication instead of a username and password
+        trusted_connection          - string, values = 'yes', 'no'
 
         Return:         - MSSQL cursor
         """
@@ -410,7 +413,7 @@ class MSSQL_Utilities:
             # login using connection string
             if use_windows_authentication:
                 # log to console status of logging into database
-                log.info('[Logging into MSSQL DB using windows Auth on DB: ' + database + ']')
+                log.info(f"[Logging into MSSQL DB using windows Auth on DB: {database}]")
                 # establish a connection
                 cursor_connection = pyodbc.connect(driver=driver,
                                                    host=server,
@@ -419,20 +422,20 @@ class MSSQL_Utilities:
             # log in using credentials: username/password
             else:
                 # log to console status of logging into database
-                log.info('[Logging into MSSQL DB using credentials on DB: ' + database + ']')
+                log.info(f"[Logging into MSSQL DB using credentials on DB: {database}]")
                 # create instance of cursor to connect to MSSQL database.
                 cursor_connection = pyodbc.connect(driver=driver, host=server, database=database,
                             user=username, password=password)
             # convert the instance to a cursor
             cursor = cursor_connection.cursor()
             # log to console the cursor is created
-            log.info('[Creating Cursor]')
+            log.info("[Creating Cursor]")
             # return the connection and cursor to use to query against the database
             return (cursor_connection, cursor)
         # exception block - error
         except Exception as e:
             # log error when
-            log.exception(f"[Error ...{e}]")
+            log.exception(f"[Error Logging into MSSQL DB...{e}]")
 
     def query_mssql_return_dataframe(self, query, cursor):
         """
@@ -448,42 +451,42 @@ class MSSQL_Utilities:
         # try except block
         try:
             # log to console beginning query against mssql database
-            log.info('[Querying MS SQL DB...]')
+            log.info("[Querying MS SQL DB...]")
             # execute query with cursor
             cursor = cursor.execute(query)
             # convert the results into a list of columns
             columns = [column[0] for column in cursor.description]
             # log to console status of querying records
-            log.info('[Condensing results into Dict...]')
+            log.info("[Condensing results into Dict...]")
             # convert the columns and rows of data into a list of dicts
             results = [dict(zip(columns, row)) for row in cursor.fetchall()]
             # log to console status of querying records
-            log.info('[transforming Dict into DataFrame...]')
+            log.info("[transforming Dict into DataFrame...]")
             # convert the list of dicts into a pandas dataframe
             results_df = pd.DataFrame(results)
             # log to console status of querying records
-            log.info('[loaded ' + str(len(results_df)) + ' records into DataFrame]')
+            log.info(f"[loaded {str(len(results_df))} records into DataFrame]")
             # return the results of the query as a pandas data frame
             return results_df
-        # exception block - error
+        # exception block - error querying mssql table
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when querying mssql table
+            log.exception(f"[Error querying mssql table...{e}]")
 
-    def insert_dataframe_into_mssql_table(self, connection, cursor, df, tablename, column_types = [], cols = '', use_all_columns_in_df = True, close_connection = True):
+    def insert_dataframe_into_mssql_table(self, connection, cursor, df, table_name, column_types = [], cols = "", use_all_columns_in_df = True, close_connection = True):
         """Description: insert a dataframe into a mssql table, the whole dataframe will be inserted
         Parameters:
 
         connection              - MSSQL database connection
         cursor                  - MSSQL connection cursor
         df                      - dataframe to insert
-        tablename               - table name of database to insert records into
+        table_name              - table name of database to insert records into
         column_types            - set column datatypes before insert, auto datatype setting can sometimes be inaccurate
         cols                    - list of columns, currently experimental
         use_all_columns_in_df   - boolean to use all columns or not, currently experimental
         close_connection        - boolean, close connection after insert.
 
-        return: none - insert records into mssql # DEBUG:
+        return:                 - none - insert records into mssql # DEBUG:
         Current issue 8/11/25:
         # current method causes warning with chained indexing instead of using .loc or .iloc
         # error is just making a getattr call twice instead of once and some other things that improve speed but not a breaking issue
@@ -495,29 +498,29 @@ class MSSQL_Utilities:
             # if the df column list matches the table, use all columns
             if use_all_columns_in_df:
                 # generate a list of all columns
-                cols = ','.join([k for k in df.dtypes.index])
-            # generate a list of '?' to be replaced by the actual values of the dataframe
-            params = ','.join('?' * len(df.columns))
+                cols = ",".join([k for k in df.dtypes.index])
+            # generate a list of "?" to be replaced by the actual values of the dataframe
+            params = ",".join("?" * len(df.columns))
             # generate the sql commit with the dataframe
-            sql = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(tablename, cols, params)
+            sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(table_name, cols, params)
 
             # for loop only works when provided a list of column converted types
-            log.info('[Converting data types in DataFrame...]')
+            log.info("[Converting data types in DataFrame...]")
             # loop through each column to convert the type every value
             for index, col in enumerate(df.columns):
                 # confirm the index is still within range of acceptable indexes
                 if index < len(column_types):
                     # check if type == int
-                    if column_types[index] == 'int':
+                    if column_types[index] == "int":
                         df[col] = df[col].astype(int)
                     # check if type == string
-                    if column_types[index] == 'str':
+                    if column_types[index] == "str":
                         df[col] = df[col].astype(str)
                     # check if type == float
-                    if column_types[index] == 'float':
+                    if column_types[index] == "float":
                         df[col] = df[col].astype(float)
                     # check if type == boolean
-                    if column_types[index] == 'bool':
+                    if column_types[index] == "bool":
                         df[col] = df[col].astype(bool)
             # convert the rows in the dataframe into tuples
             data = [tuple(x) for x in df.values]
@@ -531,10 +534,10 @@ class MSSQL_Utilities:
             if close_connection:
                 # close the connection
                 connection.close()
-        # exception block - error
+        # exception block - error inserting dataframe into mssql table
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when inserting dataframe into mssql table
+            log.exception(f"[Error inserting dataframe into mssql table: {table_name}...{e}]")
 
     def update_rows_in_mssql_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
@@ -554,12 +557,12 @@ class MSSQL_Utilities:
         where_column_name        - single field, condition for update
         where_column_list        - list of accepted values for where condition
 
-        Return: None - delete records
+        Return:                  - None - update records
         """
         # try except block
         try:
             # log to console, creating update statement to upload
-            log.info('[Creating Update SQL statement...]')
+            log.info("[Creating Update SQL statement...]")
             # create beginning of update, add table name
             sql_update = "UPDATE " + table_name + " SET "
             # add column names and column values to set in the update
@@ -577,13 +580,13 @@ class MSSQL_Utilities:
             # execute the deletion of records
             cursor.execute(sql_update)
             # log to console commiting update to table now
-            log.info('[Commiting update to MSSQL table...]')
+            log.info(f"[Commiting update to MSSQL table: {table_name}...]")
             # commit the sql statement
             connection.commit()
-        # exception block - error
+        # exception block - error updating rows in mssql table
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when attempting to update rows in mssql table
+            log.exception(f"[Error updating rows in mssql table...{e}]")
 
     def delete_rows_in_mssql_table(self, connection, cursor, table_name, column_name, record_list):
         """Description: generate a query string to delete records from a MSSQL table
@@ -595,7 +598,7 @@ class MSSQL_Utilities:
            columns_name             - column name in MSSQL table with key used to delete
            record_list              - list of key IDs to delete records
 
-           Return: None - delete records
+           Return:                  - None - delete records
         """
         # try except block
         try:
@@ -605,10 +608,12 @@ class MSSQL_Utilities:
             cursor.execute(sql_delete)
             # commit the sql statement
             connection.commit()
-        # exception block - error
+            # log to console deleting records
+            log.info(f"[Deleting records in table: {table_name}...]")
+        # exception block - error deleting rows in mssql table
         except Exception as e:
-            # log error when
-            log.exception(f"[Error ...{e}]")
+            # log error when deleting rows in mssql table
+            log.exception(f"[Error deleting rows in mssql table...{e}]")
 
 class MySQL_Utilities:
     def __init__(self):
@@ -629,14 +634,20 @@ class MySQL_Utilities:
         Username        - string, mysql Username
         Password        - string, mysql Password
 
-        Return: MySQL engine
+        Return:         - MySQL engine
         """
-        # log to console engine is created
-        log.info('[MySQL engine connected...]')
-        # create engine to connect to MySQL
-        engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
-        # return engine to perform operations with
-        return engine
+        # try except block
+        try:
+            # log to console engine is created
+            log.info("[MySQL engine connected...]")
+            # create engine to connect to MySQL
+            engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
+            # return engine to perform operations with
+            return engine
+        # exception block - error logging into mysql
+        except Exception as e:
+            # log error when logging into mysql
+            log.exception(f"[Error logging into mysql...{e}]")
 
     def query_mysql_return_dataframe(self, query, engine):
         """
@@ -647,17 +658,22 @@ class MySQL_Utilities:
         query              - query string
         engine             - engine used to query database and load results into dataframe
 
-        Return: pandas.DataFrame
+        Return:            - pandas.DataFrame
         """
+        # try except block
+        try:
+            # log to console beginning query against mssql database
+            log.info("[Querying MS SQL DB...]")
+            # read query into dataframe
+            df = pd.read_sql(query, engine)
+            # return the dataframe of results from the MySQL table
+            return df
+        # exception block - error querying mysql and returning a dataframe
+        except Exception as e:
+            # log error when querying mysql and returning a dataframe
+            log.exception(f"[Error querying mysql and returning a dataframe...{e}]")
 
-        # log to console beginning query against mssql database
-        log.info('[Querying MS SQL DB...]')
-        # read query into dataframe
-        df = pd.read_sql(query, engine)
-        # return the dataframe of results from the MySQL table
-        return df
-
-    def insert_dataframe_into_mysql_table(self, engine, df, tablename, index = False, if_exists = 'fail'):
+    def insert_dataframe_into_mysql_table(self, engine, df, table_name, index = False, if_exists = "fail"):
         """Description: attempt to insert an entire dataframe into a MySQL table
         Parameters:
 
@@ -671,12 +687,18 @@ class MySQL_Utilities:
                             replace: Drop the table before inserting new values.
                             append: Insert new values to the existing table
 
-        return: none - insert records into mysql
+        return:         - none - insert records into mysql
         """
-        # if the df column list matches the table, use all columns
-        log.info('[Uploading Dataframe to MySQL DB Table...]')
-        # upload records directly from dataframe using to_sql function
-        df.to_sql(name = tablename, con = engine, index = index, if_exists = if_exists)
+        # try except block
+        try:
+            # if the df column list matches the table, use all columns
+            log.info(f"[Uploading Dataframe to MySQL DB Table: {table_name}...]")
+            # upload records directly from dataframe using to_sql function with mysql engine
+            df.to_sql(name = table_name, con = engine, index = index, if_exists = if_exists)
+        # exception block - error inserting dataframe into mysql table
+        except Exception as e:
+            # log error when inserting dataframe into mysql table
+            log.exception(f"[Error inserting dataframe into mysql table: {table_name}...{e}]")
 
     def update_rows_in_mysql_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
         """
@@ -695,39 +717,45 @@ class MySQL_Utilities:
         where_column_name        - single field, condition for update
         where_column_list        - list of accepted values for where condition
 
-        Return: None - delete records
+        Return:                  - None - delete records
         """
-        # log to console, creating update statement to upload
-        log.info('[Creating Update SQL statement...]')
-        # create beginning of update, add table name
-        sql_update = "UPDATE " + table_name + " SET "
-        # add column names and column values to set in the update
-        for index, col in enumerate(columns_to_update):
-            # make sure to not grab a value outside of range and not the last row
-            if index < len(columns_to_update) - 1:
-                # for all lines except the last row, add column name, value, and comma
-                sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
-            # adding string to sql_update for last row to update
-            if index == len(columns_to_update) - 1:
-                # for last row, add column name and value without a comma
-                sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
-        # add where clause to end of sql string
-        sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
+        # try except block
+        try:
+            # log to console, creating update statement to upload
+            log.info("[Creating Update SQL statement...]")
+            # create beginning of update, add table name
+            sql_update = "UPDATE " + table_name + " SET "
+            # add column names and column values to set in the update
+            for index, col in enumerate(columns_to_update):
+                # make sure to not grab a value outside of range and not the last row
+                if index < len(columns_to_update) - 1:
+                    # for all lines except the last row, add column name, value, and comma
+                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
+                # adding string to sql_update for last row to update
+                if index == len(columns_to_update) - 1:
+                    # for last row, add column name and value without a comma
+                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
+            # add where clause to end of sql string
+            sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
 
-        # create connection to execute query from engine
-        with engine.connect() as connection:
-            # set safe mode off before update
-            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
-            connection.commit()
-            # execute the update of records
-            connection.execute(text(sql_update))
-            # commit the sql statement
-            connection.commit()
-            # set safe mode back on
-            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
-            connection.commit()
-        # log to console commiting update to table now
-        log.info('[Commiting update to MySQL table...]')
+            # create connection to execute query from engine
+            with engine.connect() as connection:
+                # set safe mode off before update
+                connection.execute(text("SET SQL_SAFE_UPDATES = 0;"))
+                connection.commit()
+                # execute the update of records
+                connection.execute(text(sql_update))
+                # commit the sql statement
+                connection.commit()
+                # set safe mode back on
+                connection.execute(text("SET SQL_SAFE_UPDATES = 1;"))
+                connection.commit()
+            # log to console commiting update to table now
+            log.info(f"[Commiting update to MySQL table: {table_name}...]")
+        # exception block - error updating rows in mysql table
+        except Exception as e:
+            # log error when updating rows in mysql table
+            log.exception(f"[Error updating rows in mysql table: {table_name}...{e}]")
 
     def delete_rows_in_mysql_table(self, engine,  table_name, column_name, record_list):
         """Description: generate a query string to delete records from a MySQL table
@@ -738,25 +766,31 @@ class MySQL_Utilities:
            columns_name             - column name in MySQL table with key used to delete
            record_list              - list of key IDs to delete records
 
-           Return: None - delete records
+           Return:                  - None - delete records
         """
-        # Example with parameterization
-        sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
+        # try except block
+        try:
+            # Example with parameterization
+            sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
 
-        # open connection and submit the delete query
-        with engine.connect() as connection:
-            # set safe mode off before update
-            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
-            connection.commit()
-            # execute the update of records
-            connection.execute(text(sql_delete))
-            # commit the sql statement
-            connection.commit()
-            # set safe mode back on
-            connection.execute(text('SET SQL_SAFE_UPDATES = 0;'))
-            connection.commit()
-        # log to console commiting update to table now
-        log.info('[Commiting delete to MySQL table...]')
+            # open connection and submit the delete query
+            with engine.connect() as connection:
+                # set safe mode off before update
+                connection.execute(text("SET SQL_SAFE_UPDATES = 0;"))
+                connection.commit()
+                # execute the update of records
+                connection.execute(text(sql_delete))
+                # commit the sql statement
+                connection.commit()
+                # set safe mode back on
+                connection.execute(text("SET SQL_SAFE_UPDATES = 1;"))
+                connection.commit()
+            # log to console commiting update to table now
+            log.info(f"[Commiting delete to MySQL table: {table_name}...]")
+        # exception block - error deleting rows in mysql table
+        except Exception as e:
+            # log error when deleting rows in mysql table
+            log.exception(f"[Error deleting rows in mysql table: {table_name}...{e}]")
 
 class EC2_S3_Utilities:
     def __init__(self):
@@ -782,12 +816,12 @@ class EC2_S3_Utilities:
         aws_access_key_id       - string, set up IAM User and create access key
         aws_secret_access_key   - string, set up IAM User and create access key
 
-        Return: boto3.client()
+        Return:                 - boto3.client()
         """
         # try except block on uploading the dataframe to s3
         try:
             # log to console setting up client to access s3 buckets
-            log.info('[Initiating boto3 client connection...]')
+            log.info("[Initiating boto3 client connection...]")
             return boto3.client(service_name = service_name,
                                 region_name = region_name,
                                 aws_access_key_id = aws_access_key_id,
@@ -796,7 +830,7 @@ class EC2_S3_Utilities:
             # log error when attempting to upload file to s3 bucket
             log.exception(f"[Error initiating boto3 client connection]")
 
-    def upload_dataframe_to_s3(self, df, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/file.txt'):
+    def upload_dataframe_to_s3(self, df, bucket_name = "your-s3-bucket-name", object_key = "path/to/your/file.txt"):
         """
         Description: # Define your bucket name, object key (file path in S3), and local file path
 
@@ -806,7 +840,7 @@ class EC2_S3_Utilities:
         object_key      - string, name of file to upload dataframe into, make sure to end with .csv
 
 
-        Return: nothing
+        Return:         - None - upload dataframe to s3 bucket
         """
         # set path string variable of uri to upload file to
         s3_path = f"s3://{bucket_name}/{object_key}"
@@ -820,7 +854,7 @@ class EC2_S3_Utilities:
             # log error when attempting to upload file to s3 bucket
             log.exception(f"[Error uploading CSV to S3: {e} at path: {s3_path}]")
 
-    def download_dataframe_from_s3(self, bucket_name = 'your-s3-bucket-name', object_key = 'path/to/your/data_file.csv'):
+    def download_dataframe_from_s3(self, bucket_name = "your-s3-bucket-name", object_key = "path/to/your/data_file.csv"):
         # Read CSV directly from S3 using pandas
         """
         Description: # Define your bucket name, object key (file path in S3), and local file path
@@ -829,7 +863,7 @@ class EC2_S3_Utilities:
         bucket_name     - string, name of s3 bucket
         object_key      - string, name of file to upload dataframe into, make sure to end with .csv
 
-        Return:
+        Return:         - pandas dataframe
         """
         # set path string variable of uri to upload file to
         s3_path = f"s3://{bucket_name}/{object_key}"
@@ -853,14 +887,14 @@ class EC2_S3_Utilities:
         bucket_name     - string, name of bucket in s3
         file_key        - string, file to be deleted
 
-        Return: response from s3_client.delete_object()
+        Return:         - response from s3_client.delete_object()
         """
         # try except block attempting to delete a file from s3 bucket
         try:
             # get response from attempting to delete object/file from bucket
             response = s3_client.delete_object(Bucket=bucket_name, Key=file_key)
             #check the response body for status of 204 meaning success and no message body to send back
-            if(response['ResponseMetadata']['HTTPStatusCode'] == 204):
+            if(response["ResponseMetadata"]["HTTPStatusCode"] == 204):
                 # log to console successful attempt to delete file from bucket
                 log.info(f"[File '{file_key}' deleted successfully from bucket '{bucket_name}'.]")
             # return the response to view
@@ -905,7 +939,7 @@ class MongoDB_Utilities:
         Parameters:
         uri         - string, path to the mongodb database
 
-        Return: MongoClient
+        Return:     - MongoClient
         """
         # try except block on connecting to a mongodb client,
         # will not error connecting to nothing or random strings, not sure why
@@ -934,7 +968,7 @@ class MongoDB_Utilities:
         collection          - string, collection name in database to insert records
         close_connection    - boolean, default to false, true to close mongodb connection
 
-        Return: result from upload of records, single record upload will return id
+        Return:             - result from upload of records, single record upload will return id
         """
         # try except block on connecting to a mongodb client
         try:
@@ -979,7 +1013,7 @@ class MongoDB_Utilities:
         value               - string, records that match the value for the above field in a collection
         close_connection    - boolean, default to false, true to close mongodb connection
 
-        Return: pandas dataframe
+        Return:             - pandas dataframe
         """
         # try except block on connecting to a mongodb client
         try:
@@ -1021,7 +1055,7 @@ class MongoDB_Utilities:
         field_is_unique     - boolean, default to false, true if column has only unique values
         close_connection    - boolean, default to false, true to close mongodb connection
 
-        Return: result from upload of records, single record upload will return id
+        Return:             - result from upload of records, single record upload will return id
         """
         # try except block deleting records from a mongodb collection based on single column value pair
         try:
@@ -1076,7 +1110,7 @@ class MongoDB_Utilities:
         collection          - string, collection name in database to update records
         close_connection    - boolean, default to false, true to close mongodb connection
 
-        Return: result from upload of records, single record upload will return id
+        Return:             - result from upload of records, single record upload will return id
         """
         # try except block deleting records from a mongodb collection based on single column value pair
         try:
@@ -1088,7 +1122,7 @@ class MongoDB_Utilities:
                 # remove the id field and use all other fields on the row to create a dictionary
                 update_dict = row.drop(field).to_dict()
                 # create update call dictionary with primary key = '$set'
-                update_data = {'$set': update_dict}
+                update_data = {"$set": update_dict}
                 # attempt to update a single record in the mongo db collection
                 result = collection.update_one(filter_query, update_data)
                 # log to console results of deleting record to collection
@@ -1110,7 +1144,7 @@ class Custom_Utilities:
            - currently no customization used.
         """
 
-    def merge_dfs(self, left, right, left_on, right_on, how ='inner', suffixes = ('_left', '_right'), indicator = True, validate = None):
+    def merge_dfs(self, left, right, left_on, right_on, how ="inner", suffixes = ("_left", "_right"), indicator = True, validate = None):
         """
         Description: merge two dataframes based on list of columns to join on
         Parameters:
@@ -1129,7 +1163,7 @@ class Custom_Utilities:
         # try except block
         try:
             # log to console merging of dataframe is occuring
-            log.info('[Merging dataframes...]')
+            log.info("[Merging dataframes...]")
             # return merged dataframe
             return pd.merge(left=left, right=right,
                             how=how, left_on=left_on, right_on=right_on,
@@ -1139,7 +1173,7 @@ class Custom_Utilities:
             # log error when merging dataframes
             log.exception(f"[Error merging dataframes...{e}]")
 
-    def get_df_diffs(self, left, right, left_on, right_on, how ='inner', suffixes = ('_left', '_right'), indicator = True, validate = None):
+    def get_df_diffs(self, left, right, left_on, right_on, how ="inner", suffixes = ("_left", "_right"), indicator = True, validate = None):
         """
         Description: merge two dataframes based on list of columns to join on,
                      then return a tuple of 3 dataframes, 1 where records exist in both left and right,
@@ -1150,7 +1184,7 @@ class Custom_Utilities:
         right               - right dataframe
         left_on             - list of string column names to perform merge on
         right_on            - list of string column names to perform merge on
-        how='inner'         - what type of join to use for the merge, inner reduces duplicate the best
+        how="inner"         - what type of join to use for the merge, inner reduces duplicate the best
         suffixes            - tuple of string to append to the end of columns from each dataframe
         indicator           - indicate left/right/both dataframe the row is found in
         validate            - can check for 1:1/1:many/many:1/many:many merges
@@ -1160,7 +1194,7 @@ class Custom_Utilities:
         # try except block
         try:
             # log to console merging of dataframe is occuring
-            log.info('[Merging dataframes...]')
+            log.info("[Merging dataframes...]")
             # merge the two input dataframes
             merged_df = self.merge_dfs(left=left, right=right,
                             how=how, left_on=left_on, right_on=right_on,
@@ -1172,7 +1206,7 @@ class Custom_Utilities:
             # separate the merged dataframe basedf on _merge value, 1 dataframe for records in the right dataframe
             right_only_df = merged_df[merged_df["_merge"] == "right_only"]
             # log to console splitting of dataframe is occuring
-            log.info('Analyzing and splitting input dataframes...]')
+            log.info("[Analyzing and splitting input dataframes...]")
             # return a tuple showing records from both input df split among three new dataframes
             return (both_df, left_only_df, right_only_df)
         # exception block - error merging and return tuple of df diff
@@ -1195,25 +1229,25 @@ class Custom_Utilities:
         # try except block
         try:
             # log to console updating the dataframe datatypes
-            log.info('[updating datatypes of dataframe...]')
+            log.info("[updating datatypes of dataframe...]")
             # loop through each column in the dataframe to format
             for index, col in enumerate(df.columns):
                 # confirm the loop index exists in the range of columns
                 if index < len(df.columns):
                     # check if type == int
-                    if df[col].dtypes == 'int64':
+                    if df[col].dtypes == "int64":
                         # set column to type int
                         df[col] = df[col].astype(int)
                     # check if type == string, date, or object
-                    if df[col].dtypes == 'object':
+                    if df[col].dtypes == "object":
                         # set column to type str
                         df[col] = df[col].astype(str)
                     # check if type == float
-                    if df[col].dtypes == 'float64':
+                    if df[col].dtypes == "float64":
                         # set column to type float
                         df[col] = df[col].astype(float)
                     # check if type == boolean
-                    if df[col].dtypes == 'bool':
+                    if df[col].dtypes == "bool":
                         # set column to type bool
                         df[col] = df[col].astype(bool)
             # return the reformatted dataframes
@@ -1240,15 +1274,15 @@ class Custom_Utilities:
             writer = pd.ExcelWriter(file_name)
             # loop through list of multiple DataFrame
             # each dataframe will be its own sheet on the document
-            log.info('[writing each sheet to excelfile]')
+            log.info("[writing each sheet to excelfile]")
             # loop through the list of each dataframe to write to a sheet
             for index, df in enumerate(dfs):
                 # log to console what sheet is being written
-                log.info('[writing sheet to excel file: ' + str(sheet_names[index]) + ']')
+                log.info(f"[writing sheet to excel file: {str(sheet_names[index])}]")
                 # write the individual dataframe to it's associated sheet
                 df.to_excel(writer, sheet_names[index], index = False)
             # log finished looping and now writing file out
-            log.info('[saving file to output location]')
+            log.info("[saving file to output location]")
             # save the file
             writer.save()
         # exception block - error writing list of dataframe to excel sheets
@@ -1256,7 +1290,7 @@ class Custom_Utilities:
             # log error when writing list of dataframe to excel sheets
             log.exception(f"[Error writing list of dataframe to excel sheets...{e}]")
 
-    def encode_df(self, df, encoding = 'unicode_escape', decoding = 'utf-8'):
+    def encode_df(self, df, encoding = "unicode_escape", decoding = "utf-8"):
         """
         Description: encode strings in unicode_escape and decode back to utf-8 for processing records as utf-8
         Parameters:
@@ -1265,12 +1299,12 @@ class Custom_Utilities:
         encoding    - string, default to unicode_escape
         decoding    - string, default to utf-8
 
-        Return: pandas.DataFrame
+        Return:     - pandas.DataFrame
         """
         # try except block
         try:
             # log to console, beginning encoding data in dataframe
-            log.info('[encoding query results in DataFrames]')
+            log.info("[encoding query results in DataFrames]")
             # return the encoded data for strings
             return df.map(lambda x : x.encode(encoding).decode(decoding) if isinstance(x, str) else x)
         # exception block - error encoding dataframe values
@@ -1300,13 +1334,13 @@ class Custom_Utilities:
             # sort the values of the data frame by the sort fields selected
             if sort:
                 # log to console beginning sorted
-                log.info('[Sorting DataFrame before generating list.]')
+                log.info("[Sorting DataFrame before generating list.]")
                 # create list of fields to sort the dataframe by
                 sort_fields = group_fields.append(changing_fields)
                 # sort the dataframe based on the sort fields
                 df.sort_values(sort_fields, inplace = True)
             # log to console what the new field is called that will hold the sequence
-            log.info('[generating sequence for: ' + new_field + ']')
+            log.info(f"[generating sequence for:  {new_field}]")
             # if there is no field declared how to sequence the group
             if changing_fields == None:
                 # iterrate throught the dataframe row by row
@@ -1314,7 +1348,7 @@ class Custom_Utilities:
                     # every 10,000 rows add a log output for timekeeping
                     if index % incremental_log == 0:
                         # log to console a timestamp and number of rows processed
-                        log.info('[rows processed: ' + str(index) + ']')
+                        log.info(f"[rows processed: {str(index)}]")
                     # if the current row's group is not the same as the previous row's group
                     if int(index) == 0 or not (df.loc[int(index) - 1, group_fields].equals(df.loc[index, group_fields])):
                         # start the sequence again based on the starting base value
@@ -1349,7 +1383,7 @@ class Custom_Utilities:
             # log error creating sequence column for unique members of a group
             log.exception(f"[Error generating sequence for members of groups...{e}]")
 
-    def generate_sql_list_from_df_column(self, df, column, output_file_name = None, return_line = False, output = 'file'):
+    def generate_sql_list_from_df_column(self, df, column, output_file_name = None, return_line = False, output = "file"):
         """
         Description: generate a string list of values from a dataframe column to inject into a query
         Parameters:
@@ -1388,15 +1422,15 @@ class Custom_Utilities:
                 # add ending parenthesis to sql string list
                 sql_string = sql_string[:-1] + ")"
             # if the sql string is to be written to a file for further use
-            if output == 'file' and output_file_name != None:
+            if output == "file" and output_file_name != None:
                 # log to console, attempting output sql string to a file
-                log.info('[Converting DataFrame Column to SQL List in text file: \n ' + output_file_name + ' ]\n')
+                log.info("[Converting DataFrame Column to SQL List in text file: \n " + output_file_name + " ]\n")
                 # open the file in write mode
-                with open(output_file_name, 'w') as file:
+                with open(output_file_name, "w") as file:
                     # write the sql string to the file and close once done
                     file.write(sql_string)
             # if the sql string should be returned instead of written to file
-            elif output == 'string':
+        elif output == "string":
                 # retun sql string as list
                 return sql_string
             # if don't write sql string to file, and don't return the string
@@ -1408,12 +1442,12 @@ class Custom_Utilities:
             # log error creating sql list from dataframe column
             log.exception(f"[Error generating sql list from dataframe column...{e}]")
 
-    def now(self, ts_format='%Y-%m-%d__%H-%M-%S'):
+    def now(self, ts_format="%Y-%m-%d__%H-%M-%S"):
         """
         Description: generate a string list of values from a dataframe column to inject into a query
         Parameters:
 
-        ts_format - default to '%Y-%m-%d__%H-%M-%S' - this is the default of salesforce
+        ts_format - default to "%Y-%m-%d__%H-%M-%S" - this is the default of salesforce
 
         Return:     - datetime of right now down to the second.
         """
