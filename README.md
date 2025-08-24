@@ -12,10 +12,12 @@ This is a mock project for migrating data setting up database to database integr
   - Also contains an additional class with useful functions for adding data and outputting to different formats.
 
 ## Terraform
-AWS Resources mainly EC2, S3, and lambda are all created and destroyed through terraform files in the terraform folder.
+- AWS Resources mainly EC2, S3, and lambda are all created and destroyed through terraform files in the terraform folder.
 
 ## Mockaroo.com
-All mock Data is generated as csv using mockaroo, no information is of real individuals
+
+- All mock Data is generated as csv using mockaroo, no information is of real individuals
+
 ---
 
 # examples for Database DML functions
