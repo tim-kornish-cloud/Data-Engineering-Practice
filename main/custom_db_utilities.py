@@ -623,7 +623,7 @@ class MySQL_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_mysql(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = '', username = None, password = None, ssl_disabled=True):
+    def login_to_mysql(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = "", username = None, password = None, ssl_disabled=True):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
