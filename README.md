@@ -1,10 +1,7 @@
-setting up database to database integration through python pandas populated with mock data from https://www.mockaroo.com/
-
-Three databases used are local, and two cloud:
-
+This is a mock project for migrating data setting up database to database integration through python pandas populated with mock data from https://www.mockaroo.com/
 
 # custom_db_utilities.py
-  - contains a utilities class for each database to insert/delete/update/query data from multiple data sources all interfacing through pandas dataframes.
+  - contains a utilities class for each database listed below to insert/delete/update/query data from multiple data sources all interfacing through pandas dataframes.
 ## Cloud DB
     - Salesforce
     - AWS S3
@@ -14,6 +11,11 @@ Three databases used are local, and two cloud:
     - MongoDB
   - Also contains an additional class with useful functions for adding data and outputting to different formats.
 
+## Terraform
+AWS Resources mainly EC2, S3, and lambda are all created and destroyed through terraform files in the terraform folder.
+
+## Mockaroo.com
+All mock Data is generated as csv using mockaroo, no information is of real individuals
 ---
 
 # examples for Database DML functions
@@ -35,9 +37,9 @@ Three databases used are local, and two cloud:
 ## MSSQL
 ### One script to perform:
 - insert records
-SELECT query
-update query
-delete query
+- SELECT query
+- update query
+- delete query
 
 1) INSERT_mock_data_with_pandas_into_MSSQL.py
 2) SELECT_query_mock_data_from_MSSQL_into_df.py
