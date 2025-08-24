@@ -92,7 +92,7 @@ class Salesforce_Utilities:
         # try except block
         try:
             # log status to console of querying Salesforce
-            log.info(f"[Querying Salesforce orgs, include deleted records: {str(include_deleted)}]"")
+            log.info(f"[Querying Salesforce orgs, include deleted records: {str(include_deleted)}]")
             # query salesforce and return results in json format
             query_results = sf.query_all(query, include_deleted = include_deleted)
             # return the json query results
@@ -1424,15 +1424,15 @@ class Custom_Utilities:
             # if the sql string is to be written to a file for further use
             if output == "file" and output_file_name != None:
                 # log to console, attempting output sql string to a file
-                log.info("[Converting DataFrame Column to SQL List in text file: \n " + output_file_name + " ]\n")
+                log.info(f"[Converting DataFrame Column to SQL List in text file: {output_file_name }]")
                 # open the file in write mode
                 with open(output_file_name, "w") as file:
                     # write the sql string to the file and close once done
                     file.write(sql_string)
             # if the sql string should be returned instead of written to file
-        elif output == "string":
-                # retun sql string as list
-                return sql_string
+            elif output == "string":
+                    # retun sql string as list
+                    return sql_string
             # if don't write sql string to file, and don't return the string
             else:
                 # do nothing
