@@ -10,11 +10,11 @@ import numpy as np
 import pandas as pd
 import os
 from simple_salesforce import Salesforce
-from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
+from custom_db_utilities import  Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = SalesForce_Utilities()
+SF_Utils = Salesforce_Utilities()
 # create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
@@ -42,9 +42,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
+success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
+fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
 input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
@@ -87,9 +87,9 @@ df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 accounts_to_update_df = Utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = True)
 
 # add new column called type and set all accounts to government
-accounts_to_update_df["Type"] = "Prospect"
+accounts_to_update_df.loc[:,"Type"] = "Prospect"
 # add new column called type and set all accounts to government
-accounts_to_update_df["Industry"] = "Government"
+accounts_to_update_df.loc[:,"Industry"] = "Government"
 
 # isolate which account fields will be used in the update
 # only updating the two fields Type and Industry

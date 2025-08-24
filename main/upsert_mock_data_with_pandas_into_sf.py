@@ -10,11 +10,14 @@ import numpy as np
 import pandas as pd
 import os
 from simple_salesforce import Salesforce
-from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
+from custom_db_utilities import  Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
+# set copy on write on
+pd.set_option("mode.copy_on_write", True)
+
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = SalesForce_Utilities()
+SF_Utils = Salesforce_Utilities()
 # create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
@@ -42,9 +45,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
+success_file = dir_path + "\\Output\\UPSERT\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
+fallout_file = dir_path + "\\Output\\UPSERT\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
 input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"

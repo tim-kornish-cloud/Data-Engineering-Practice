@@ -37,6 +37,8 @@ coloredlogs.install()
 # set debug level for which debugging is output to console,
 # currently only using info debug level comments
 log.basicConfig(level = log.ERROR)
+# set copy on write on to suppress writing a slice of a dataframe warnings
+pd.set_option("mode.copy_on_write", True)
 
 class Salesforce_Utilities:
     def __init__(self):

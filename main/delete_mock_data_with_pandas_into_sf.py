@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 import os
 from simple_salesforce import Salesforce
-from custom_db_utilities import  SalesForce_Utilities, Custom_Utilities
+from custom_db_utilities import  Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
-SF_Utils = SalesForce_Utilities()
+SF_Utils = Salesforce_Utilities()
 # create and instance of the custom utilities class used to format and modify dataframe data
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script

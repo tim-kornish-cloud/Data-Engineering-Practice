@@ -49,6 +49,18 @@ df_to_upload = mock_data_df.iloc[record_start:record_start+num_of_records]
 # initiate an MS SQL connection and cursor to query with
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
+# list of data types to convert the df columns to fit MSSQL
+# need to find a way to parse the df.columns and generate this automatically
+# this is a temporaray bandaid being hardcoded, honestly may perform a subset of
+# hardcoding these types instead of the entire dataframe
+column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
+
+# mssql table name the dataframe is being inserted into
+table_name = 'Accounts_test_1'
+
+# insert subset of the csv  from a dataframe into the mssql table
+MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, df_to_upload, table_name, column_types)
+
 # select accounts to match against the csv to not attempt to insert duplicates
 select_query = """SELECT TOP (1000) [AccountNumber]
       ,[Name]
@@ -62,12 +74,3 @@ select_query = """SELECT TOP (1000) [AccountNumber]
 
 # accounts in the mssql table shown in the query above
 account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
-
-# list of data types to convert the df columns to fit MSSQL
-# need to find a way to parse the df.columns and generate this automatically
-# this is a temporaray bandaid being hardcoded, honestly may perform a subset of
-# hardcoding these types instead of the entire dataframe
-column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
-
-# insert subset of the csv  from a dataframe into the mssql table
-MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, df_to_upload, 'Accounts_test_1', column_types)
