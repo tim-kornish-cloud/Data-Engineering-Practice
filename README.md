@@ -27,8 +27,8 @@ This is a mock project for migrating data setting up database to database integr
 ## Salesforce
 ### One script for each Salesforce DML operation:
 - insert records from pandas dataframe into salesforce
-- upsert records from pandas dataframe into salesforce
 - update records in salesforce from pandas dataframe
+- upsert records from pandas dataframe into salesforce
 - delete records in salesforce from pandas dataframe
 
 1) insert_mock_data_with_pandas_into_sf.py
