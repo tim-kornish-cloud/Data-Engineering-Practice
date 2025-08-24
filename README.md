@@ -1,6 +1,5 @@
 
-
-setting up Salesforce integration through python to MySQL database on my computer populated with mock data from https://www.mockaroo.com/
+setting up database to database integration through python populated with mock data from https://www.mockaroo.com/
 
 # custom_db_utilities.py
   - a utilities to insert/delete/update/query data from multiple data sources
