@@ -46,7 +46,7 @@ class Salesforce_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_salesForce(self, username, password, security_token, environment = ''):
+    def login_to_salesForce(self, username, password, security_token, environment = ""):
         """
         Description: log into a Salesforce or and return salesforce client
                      to operate with.
