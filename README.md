@@ -1,14 +1,18 @@
+setting up database to database integration through python pandas populated with mock data from https://www.mockaroo.com/
 
-setting up database to database integration through python populated with mock data from https://www.mockaroo.com/
+Three databases used are local, and two cloud:
+
 
 # custom_db_utilities.py
-  - a utilities to insert/delete/update/query data from multiple data sources
+  - contains a utilities class for each database to insert/delete/update/query data from multiple data sources all interfacing through pandas dataframes.
+## Cloud DB
     - Salesforce
+    - AWS S3
+## Local DB
     - MSSQL
     - MySQL
-    - AWS S3
     - MongoDB
-  - Also contains an additional class with useful functions for adding data and outputting to different formats
+  - Also contains an additional class with useful functions for adding data and outputting to different formats.
 
 ---
 
@@ -17,6 +21,11 @@ setting up database to database integration through python populated with mock d
 ---
 
 ## Salesforce
+### One script for each Salesforce DML operation:
+- insert
+- upsert
+- update
+- delete
 
 1) insert_mock_data_with_pandas_into_sf.py
 2) update_mock_data_with_pandas_into_sf.py
@@ -24,6 +33,11 @@ setting up database to database integration through python populated with mock d
 4) delete_mock_data_with_pandas_into_sf.py
 
 ## MSSQL
+### One script to perform:
+- insert records
+SELECT query
+update query
+delete query
 
 1) INSERT_mock_data_with_pandas_into_MSSQL.py
 2) SELECT_query_mock_data_from_MSSQL_into_df.py
@@ -31,12 +45,20 @@ setting up database to database integration through python populated with mock d
 4) DELETE_query_csv_mock_data_from_MSSQL.py
 
 ## MySQL
+### One script to:
+- insert records from a pandas dataframe into a MySQL table
+- update records from a pandas dataframe in a MySQL table
+- delete records in a MySQL table from a pandas dataframe
 
 1) INSERT_mock_data_with_pandas_into_MySQL.py
 2) UPDATE_mock_data_with_pandas_into_MySQL.py
 3) DELETE_mock_data_with_pandas_into_MySQL.py
 
 ## AWS S3
+### One script to:
+- load a csv into a pandas dataframe and upload into a S3 bucket
+- download a csv from an S3 bucket into a pandas dataframe
+- delete a csv in an s3 bucket by filename
 
 1) load_csv_into_pandas_into_s3.py
 2) download_csv_into_pandas_from_s3.py
