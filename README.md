@@ -12,7 +12,7 @@ This is a mock project for migrating data setting up database to database integr
   - Also contains an additional class with useful functions for adding data and outputting to different formats.
 
 ## Terraform
-- AWS Resources mainly EC2, S3, and lambda are all created and destroyed through terraform files in the terraform folder.
+- AWS Resources mainly EC2, S3, and Lambda are all created and destroyed through terraform files in the terraform folder.
 
 ## Mock Data sets using Mockaroo.com
 
@@ -26,10 +26,10 @@ This is a mock project for migrating data setting up database to database integr
 
 ## Salesforce
 ### One script for each Salesforce DML operation:
-- insert
-- upsert
-- update
-- delete
+- insert records from pandas dataframe into salesforce
+- upsert records from pandas dataframe into salesforce
+- update records in salesforce from pandas dataframe
+- delete records in salesforce from pandas dataframe
 
 1) insert_mock_data_with_pandas_into_sf.py
 2) update_mock_data_with_pandas_into_sf.py
@@ -38,10 +38,10 @@ This is a mock project for migrating data setting up database to database integr
 
 ## MSSQL
 ### One script to perform:
-- insert records
-- SELECT query
-- update query
-- delete query
+- insert records from pandas dataframe into MSSQL table
+- SELECT query records in MSSQL table and load into pandas dataframe
+- update query records in MSSQL table from pandas dataframe
+- delete query records in MSSQL table from pandas dataframe
 
 1) INSERT_mock_data_with_pandas_into_MSSQL.py
 2) SELECT_query_mock_data_from_MSSQL_into_df.py
@@ -69,6 +69,11 @@ This is a mock project for migrating data setting up database to database integr
 3) delete_csv_from_s3_into_pandas.py
 
 ## MongoDB
+
+- insert records from pandas dataframe into MongoDB database collection
+- query records in MongoDB database collection and load into pandas dataframe
+- update query records in MongoDB database collection from pandas dataframe
+- delete query records in MongoDB database collection from pandas dataframe
 
 1) insert_records_from_pandas_into_mongodb.py
 2) load_records_into_pandas_from_mongodb.py
