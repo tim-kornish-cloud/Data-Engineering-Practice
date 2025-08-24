@@ -14,6 +14,15 @@ This is a mock project for migrating data setting up database to database integr
 ## Terraform
 - AWS Resources mainly EC2, S3, and Lambda are all created and destroyed through terraform files in the terraform folder.
 
+### In terraform folder use commands
+
+```console
+~$ terraform init
+~$ terraform plan
+~$ terraform apply
+~$ terraform destroy -auto-approve
+```
+
 ## Mock Data sets using Mockaroo.com
 
 - All data is generated as csv using mockaroo, no information is from real individuals.
