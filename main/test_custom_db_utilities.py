@@ -13,10 +13,7 @@ import pandas as pd
 import numpy as np
 import os
 from credentials import Credentials
-from custom_db_utilities import  Salesforce_Utilities, EC2_S3_Utilities
-
-# create instance of credentials class where creds are stored to load into the test functions
-Cred = Credentials()
+from custom_db_utilities import  Salesforce_Utilities, Custom_Utilities, EC2_S3_Utilities
 
 # set up directory pathway to load csv data
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -30,9 +27,8 @@ class TestSalesforce_Utilities(unittest.TestCase):
                      against each database
 
         """
-        self.sf_database = "Salesforce"
-        self.sf_environment = "Dev"
-        self.records = [
+        # create list of dictionary of accounts to be used for testing along with csv data
+        self.account_records = [
             {
                 "AccountNumber" : 1,
                 "Name" : "Giorgio",
@@ -64,18 +60,51 @@ class TestSalesforce_Utilities(unittest.TestCase):
                 "Account_Number_ExternaL_ID__c" : "cbaef138-60b5-4560-898f-04de85347cc2"
             }
         ]
-        self.credentials = Cred = Credentials(),
+        self.contact_records = [
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            },
+            {
+
+            }
+        ]
+        # create instance of credentials class where creds are stored to load into the test functions
+        self.credentials = Cred = Credentials()
+        # create instance of custom utilities class to modifying datasets and comparing
+        self.utils = Custom_Utilities()
         # set input path for mock data csv
         self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
-        }
+        # read the mock data csv into a pandas dataframe at the beginning of every test
+        self.mock_data_df = pd.read_csv(self.input_csv_file)
 
     def test_successful_salesforce_login_insert_then_query(self):
         """Description: This test performs the following operations
 
         1) create login to salesforce
-        2) load a dictionary record into a dataframe of length 10
-        3) upload the dataframe to Salesforce
-        4) query the inserted record and load results into a new DataFrame
+        2) load a mock csv data into a dataframe and keep a slice of length 10
+        3) upload the dataframe to Salesforce to insert 10 records
+        4) query the inserted records and load results into a new DataFrame
         5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
 
         This test covers the functions from Salesforce_Utilities:
@@ -91,6 +120,57 @@ class TestSalesforce_Utilities(unittest.TestCase):
 
         DML operations included: INSERT, SELECT
         """
+        #-----------------------------------------------------------------------
+        # 1) create login to salesforce
+        #-----------------------------------------------------------------------
+        # get username from credentials
+        username = Cred.get_username(database, environment)
+        # get password from credentials
+        password = Cred.get_password(database, environment)
+        # get login token from credentials
+        token = Cred.get_token(database, environment)
+        # create a instance of simple_salesforce to query and perform operations against salesforce with
+        sf = SF_Utils.login_to_salesForce(username, password, token)
+
+        #-----------------------------------------------------------------------
+        # 2) load a mock csv data into a dataframe and keep a slice of length 10
+        #-----------------------------------------------------------------------
+        # set record start index
+        starting_index = 0
+        # set number of records to keep
+        number_of_records = 10
+        # select only 10 records
+        df_to_upload = self.utils.get_slice_of_dataframe(self, self.mock_data_df, starting_index, number_of_records)
+
+        #-----------------------------------------------------------------------
+        # 3) upload the dataframe to Salesforce to insert 10 records
+        #-----------------------------------------------------------------------
+        # upload the records to salesforce
+        SF_Utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
+
+        #-----------------------------------------------------------------------
+        # 4) query the inserted records and load results into a new DataFrame
+        #-----------------------------------------------------------------------
+        # query the inserted records and load results into a new DataFrame
+        account_query = """SELECT   Id, AccountNumber,
+                                    Name,
+                                    NumberOfEmployees,
+                                    NumberOfLocations,
+                                    Phone,
+                                    SLA__c,
+                                    SLASerialNumber__c,
+                                    Account_Number_ExternaL_ID__c
+                            FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"""
+        # query salesforce and return the accounts just inserted
+        account_query_results = SF_Utils.query_salesforce(sf, account_query)
+        # convert query results to a dataframe
+        accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
+
+        #-----------------------------------------------------------------------
+        # 5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        #-----------------------------------------------------------------------
+        # Assert the two dataframes are equal
+        assert_frame_equal(df_to_upload, accounts_df)
 
     def test_successful_salesforce_login_update_then_query(self):
         """Description: This test performs the following operations
