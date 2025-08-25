@@ -1175,7 +1175,7 @@ class Custom_Utilities:
             # log error when merging dataframes
             log.exception(f"[Error merging dataframes...{e}]")
 
-    def get_df_diffs(self, left, right, left_on, right_on, how ="inner", suffixes = ("_left", "_right"), indicator = True, validate = None):
+    def get_df_diffs(self, left, right, left_on, right_on, how ="inner", suffixes = ("_left", "_right"), indicator = True, validate = None, drop_merge = False):
         """
         Description: merge two dataframes based on list of columns to join on,
                      then return a tuple of 3 dataframes, 1 where records exist in both left and right,
@@ -1184,12 +1184,13 @@ class Custom_Utilities:
 
         left                - left dataframe
         right               - right dataframe
-        left_on             - list of string column names to perform merge on
-        right_on            - list of string column names to perform merge on
+        left_on             - list of string, column names to perform merge on
+        right_on            - list of string, column names to perform merge on
         how="inner"         - what type of join to use for the merge, inner reduces duplicate the best
         suffixes            - tuple of string to append to the end of columns from each dataframe
         indicator           - indicate left/right/both dataframe the row is found in
         validate            - can check for 1:1/1:many/many:1/many:many merges
+        drop_merge          - remove the _merge column before returning the tuple
 
         Return: tuple of three dataframes
         """
@@ -1209,6 +1210,14 @@ class Custom_Utilities:
             right_only_df = merged_df[merged_df["_merge"] == "right_only"]
             # log to console splitting of dataframe is occuring
             log.info("[Analyzing and splitting input dataframes...]")
+            # perform cleanup: drop the _merge column before returning tuple
+            if drop_merge:
+                # drop "_merge" from both_df
+                both_df.drop("_merge", inplace = True)
+                # drop "_merge" from left_only_df
+                left_only_df.drop("_merge", inplace = True)
+                # drop "_merge" from right_only_df
+                right_only_df.drop("_merge", inplace = True)
             # return a tuple showing records from both input df split among three new dataframes
             return (both_df, left_only_df, right_only_df)
         # exception block - error merging and return tuple of df diff
