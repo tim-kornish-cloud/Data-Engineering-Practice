@@ -1238,7 +1238,7 @@ class Custom_Utilities:
             # log error when slicing dataframe
             log.exception(f"[Error slicing dataframe, check range of slice...{e}]")
 
-    def format_columns_dtypes(self, df):
+    def format_columns_dtypes(self, df, column_types = [], use_columns = False):
         """
         Description: reformat dataframe columns before merge,
                      needs merge columns to be of same type,
@@ -1247,6 +1247,8 @@ class Custom_Utilities:
         Parameters:
 
         df              - dataframe to reformat column datatypes
+        column_types    - list of strings, each being a datatype to convert the column
+        use_columns     - bool, decision to use column_types or not
 
         Return: dataframe
         """
@@ -1256,24 +1258,46 @@ class Custom_Utilities:
             log.info("[updating datatypes of dataframe...]")
             # loop through each column in the dataframe to format
             for index, col in enumerate(df.columns):
-                # confirm the loop index exists in the range of columns
-                if index < len(df.columns):
-                    # check if type == int
-                    if df[col].dtypes == "int64":
-                        # set column to type int
-                        df[col] = df[col].astype(int)
-                    # check if type == string, date, or object
-                    if df[col].dtypes == "object":
-                        # set column to type str
-                        df[col] = df[col].astype(str)
-                    # check if type == float
-                    if df[col].dtypes == "float64":
-                        # set column to type float
-                        df[col] = df[col].astype(float)
-                    # check if type == boolean
-                    if df[col].dtypes == "bool":
-                        # set column to type bool
-                        df[col] = df[col].astype(bool)
+                # if using custom list of datatypes
+                if use_columns:
+                    # confirm the loop index exists in the range of columns
+                    if index < len(df.columns):
+                        # check if type == int
+                        if df[col].dtypes == "int64":
+                            # set column to type int
+                            df[col] = df[col].astype(column_types[index])
+                        # check if type == string, date, or object
+                        if df[col].dtypes == "object":
+                            # set column to type str
+                            df[col] = df[col].astype(column_types[index])
+                        # check if type == float
+                        if df[col].dtypes == "float64":
+                            # set column to type float
+                            df[col] = df[col].astype(column_types[index])
+                        # check if type == boolean
+                        if df[col].dtypes == "bool":
+                            # set column to type bool
+                            df[col] = df[col].astype(column_types[index])
+                # attempt to let the script auto sense the datatype to convert
+                else:
+                    # confirm the loop index exists in the range of columns
+                    if index < len(df.columns):
+                        # check if type == int
+                        if df[col].dtypes == "int64":
+                            # set column to type int
+                            df[col] = df[col].astype(int)
+                        # check if type == string, date, or object
+                        if df[col].dtypes == "object":
+                            # set column to type str
+                            df[col] = df[col].astype(str)
+                        # check if type == float
+                        if df[col].dtypes == "float64":
+                            # set column to type float
+                            df[col] = df[col].astype(float)
+                        # check if type == boolean
+                        if df[col].dtypes == "bool":
+                            # set column to type bool
+                            df[col] = df[col].astype(bool)
             # return the reformatted dataframes
             return df
         # exception block - error formatting dataframe column datatypes
