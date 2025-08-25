@@ -24,7 +24,7 @@ Cred = Credentials()
 # can have multiple environments in the same script at the same time
 environment = 'Dev'
 
-# set database to MySQL
+# set database to Salesforce
 database = "Salesforce"
 
 # number of records to attempted
@@ -42,9 +42,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
+success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
+fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
 input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
