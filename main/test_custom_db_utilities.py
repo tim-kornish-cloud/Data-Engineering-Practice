@@ -11,11 +11,15 @@ from unittest.mock import patch
 from pandas.testing import assert_frame_equal, assert_series_equal
 import pandas as pd
 import numpy as np
+import os
 from credentials import Credentials
 from custom_db_utilities import  Salesforce_Utilities, EC2_S3_Utilities
 
-# create instance of credentials class where creds are stored to load into the script
+# create instance of credentials class where creds are stored to load into the test functions
 Cred = Credentials()
+
+# set up directory pathway to load csv data
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class TestSalesforce_Utilities(unittest.TestCase):
     """ Tests for Salesforce_Utilities"""
@@ -60,15 +64,9 @@ class TestSalesforce_Utilities(unittest.TestCase):
                 "Account_Number_ExternaL_ID__c" : "cbaef138-60b5-4560-898f-04de85347cc2"
             }
         ]
-        self.credentials = {
-            "Salesforce" : {
-                "username" : Cred.get_username(self.sf_database, self.sf_environment),
-                "password" : Cred.get_password(self.sf_database, self.sf_environment),
-                "token" : Cred.get_token(self.sf_database, self.sf_environment)
-            },
-            "MSSQL" : {
-                "token" : Cred.get_token(self.sf_database, self.sf_environment)
-            }
+        self.credentials = Cred = Credentials(),
+        # set input path for mock data csv
+        self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
         }
 
     def test_successful_salesforce_login_insert_then_query(self):
