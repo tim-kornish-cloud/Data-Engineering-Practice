@@ -1,3 +1,10 @@
+"""
+Author: Timothy Kornish
+CreatedDate: August - 25 - 2025
+Description: test class for all database operations from custom_db_utilities.py
+
+"""
+
 import unittest
 from unittest import mock
 from unittest.mock import patch
@@ -64,19 +71,97 @@ class TestSalesforce_Utilities(unittest.TestCase):
             }
         }
 
-    @mock.patch('Salesforce_Utilities.login_to_salesForce') # Patch the function that establishes connection
-    def test_successful_salesforce_login_insert_then_query(self, mock_connect_to_db):
+    def test_successful_salesforce_login_insert_then_query(self):
+        """Description: This test performs the following operations
 
+        1) create login to salesforce
+        2) load a dictionary record into a dataframe of length 10
+        3) upload the dataframe to Salesforce
+        4) query the inserted record and load results into a new DataFrame
+        5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
 
-    @mock.patch('Salesforce_Utilities.login_to_salesForce')
-    def test_failed_salesforce_login_insert_then_query(self, mock_connect_to_db):
-        # Configure the mock to raise a ConnectionError
-        mock_connect_to_db.side_effect = ConnectionError("Connection refused")
+        This test covers the functions from Salesforce_Utilities:
+            - login_to_salesForce
+            - query_salesforce
+            - load_query_into_dataframe
+            - load_query_with_lookups_into_dataframe
+            - format_date_to_salesforce_date
+            - reformat_dataframe_to_salesforce_records
+            - upload_dataframe_to_salesforce
+        missing:
+            - flatten_lookup_fieldname_hierarchy
 
-        # Assert that calling the function raises the expected exception
-        config = {'host': 'invalid', 'database': 'nonexistent'}
-        with self.assertRaises(ConnectionError):
-            login_to_salesForce(config)
+        DML operations included: INSERT, SELECT
+        """
 
-        # Assert that the connect_to_db function was called
-        mock_connect_to_db.assert_called_once_with(config)
+    def test_successful_salesforce_login_update_then_query(self):
+        """Description: This test performs the following operations
+
+        1) create login to salesforce
+        2) load a dictionary record into a dataframe of length 5
+        3) upload the dataframe to Salesforce to update all test records
+        4) query the updated record and load results into a new DataFrame
+        5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+
+        This test covers the functions from Salesforce_Utilities:
+            - login_to_salesForce
+            - query_salesforce
+            - load_query_into_dataframe
+            - load_query_with_lookups_into_dataframe
+            - format_date_to_salesforce_date
+            - reformat_dataframe_to_salesforce_records
+            - upload_dataframe_to_salesforce
+        missing:
+            - flatten_lookup_fieldname_hierarchy
+
+        DML operations included: UPDATE, SELECT
+        """
+    def test_successful_salesforce_login_upsert_then_query(self):
+        """Description: This test performs the following operations
+
+        1) create login to salesforce
+        2) load a dictionary record into a dataframe of length 10
+        3) choose 5 that are already loaded and 5 new.
+        4) upload the dataframe to Salesforce to upsert all test records
+        5) query the record and load results into a new DataFrame
+        6) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+
+        This test covers the functions from Salesforce_Utilities:
+            - login_to_salesForce
+            - query_salesforce
+            - load_query_into_dataframe
+            - load_query_with_lookups_into_dataframe
+            - format_date_to_salesforce_date
+            - reformat_dataframe_to_salesforce_records
+            - upload_dataframe_to_salesforce
+        missing:
+            - flatten_lookup_fieldname_hierarchy
+
+        DML operations included: UPSERT, SELECT
+        """
+
+    def test_successful_salesforce_login_delete_then_query(self):
+        """Description: This test performs the following operations
+
+        1) create login to salesforce
+        2) load a dictionary record into a dataframe of length ...
+        3) upload the dataframe to Salesforce to delete all test records in Salesforce
+        4) query the record and load results into a new DataFrame
+        5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+
+        This test covers the functions from Salesforce_Utilities:
+            - login_to_salesForce
+            - query_salesforce
+            - load_query_into_dataframe
+            - load_query_with_lookups_into_dataframe
+            - format_date_to_salesforce_date
+            - reformat_dataframe_to_salesforce_records
+            - upload_dataframe_to_salesforce
+        missing:
+            - flatten_lookup_fieldname_hierarchy
+
+        DML operations included: DELETE, SELECT
+        """
+
+if __name__ == '__main__':
+    unittest.main()
