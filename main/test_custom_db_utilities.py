@@ -66,6 +66,10 @@ class TestSalesforce_Utilities(unittest.TestCase):
         self.utils = Custom_Utilities()
         # create instance of salesforce utility class
         self.sf_utils       = Salesforce_Utilities()
+        # set saleforce environment to Dev
+        self.sf_environment = "Dev"
+        # set Salesforce database to Salesforce
+        self.sf_database = "Salesforce"
         # create instance of MSSQL utility class
         self.mssql_utils    = MSSQL_Utilities()
         # create instance of MySQL utility class
@@ -79,6 +83,10 @@ class TestSalesforce_Utilities(unittest.TestCase):
         self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
         # read the mock data csv into a pandas dataframe at the beginning of every test
         self.mock_data_df = pd.read_csv(self.input_csv_file)
+        # update success file path
+        self.update_success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + self.sf_environment + "_" + self.sf_database + ".csv"
+        # update fallout file path
+        self.update_fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + self.sf_environment + "_" + self.sf_database + ".csv"
 
     def test_successful_salesforce_login_insert_then_query(self):
         """Description: This test performs the following operations
@@ -109,11 +117,11 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # 1) create login to salesforce
         #-----------------------------------------------------------------------
         # get username from credentials
-        username = self.credentials.get_username("Salesforce", "Dev")
+        username = self.credentials.get_username(self.sf_database, self.sf_environment)
         # get password from credentials
-        password = self.credentials.get_password("Salesforce", "Dev")
+        password = self.credentials.get_password(self.sf_database, self.sf_environment)
         # get login token from credentials
-        token = self.credentials.get_token("Salesforce", "Dev")
+        token = self.credentials.get_token(self.sf_database, self.sf_environment)
         # create a instance of simple_salesforce to query and perform operations against salesforce with
         sf = self.sf_utils.login_to_salesForce(username, password, token)
 
@@ -180,16 +188,16 @@ class TestSalesforce_Utilities(unittest.TestCase):
         assert_frame_equal(formatted_accounts_df, formatted_df_to_upload)
 
 
-
     def test_successful_salesforce_login_update_then_query(self):
         """Description: This test performs the following operations
 
         1) create login to salesforce
         2) load a dictionary record into a dataframe of length 5
-        3) insert a dataframe of records into salesforce then upload the updated dataframe to Salesforce to update 5 records
-        4) query the updated record and load results into a new DataFrame
-        5) clean up environment, delete inserted records
-        6) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        3) insert a dataframe of records into salesforce then query inserted records to retrieve salesforce record ID
+        4) upload the updated dataframe with Salesforce IDs to Salesforce and update 5 records
+        5) query the updated records and load results into a new DataFrame
+        6) clean up environment, delete inserted records
+        7) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
 
         This test covers the functions from Salesforce_Utilities:
             - login_to_salesForce
@@ -208,11 +216,11 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # 1) create login to salesforce
         #-----------------------------------------------------------------------
         # get username from credentials
-        username = self.credentials.get_username("Salesforce", "Dev")
+        username = self.credentials.get_username(self.sf_database, self.sf_environment)
         # get password from credentials
-        password = self.credentials.get_password("Salesforce", "Dev")
+        password = self.credentials.get_password(self.sf_database, self.sf_environment)
         # get login token from credentials
-        token = self.credentials.get_token("Salesforce", "Dev")
+        token = self.credentials.get_token(self.sf_database, self.sf_environment)
         # create a instance of simple_salesforce to query and perform operations against salesforce with
         sf = self.sf_utils.login_to_salesForce(username, password, token)
 
@@ -233,20 +241,38 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # upload the records to salesforce
         self.sf_utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
 
-        # update values in the DataFrame
-        # add new column called type and set all accounts to Prospect
-        df_to_upload .loc[:,"Type"] = "Prospect"
-        # add new column called Industry and set all accounts to government
-        df_to_upload .loc[:,"Industry"] = "Government"
+        # match queried accounts with CSV accounts based on join of accountNumber field
+        # query string to select records from salesforce
+        # before uploading with a delete  DML operation
+        account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
 
-        # upload the records to salesforce
-        self.sf_utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'update')
+        # query salesforce and return the accounts to be deleted
+        account_query_results = self.sf_utils.query_salesforce(sf, account_query)
+        # convert query results to a dataframe
+        accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(account_query_results)
+        # encode the dataframe before uploading to delete
+        accounts_df = self.utils.encode_df(accounts_df)
+        # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
+        accounts_to_update_df = self.utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = False)
+        #drop extra columns, and rename columns to be kept
 
         #-----------------------------------------------------------------------
-        # 4) query the updated records and load results into a new DataFrame
+        # 4) query inserted records to retrieve salesforce record IDs
+        #-----------------------------------------------------------------------
+        # add new columns in the DataFrame to update records in salesforce
+        # add new column called type and set all accounts to Prospect
+        accounts_to_update_df.loc[:,"Type"] = "Prospect"
+        # add new column called Industry and set all accounts to government
+        accounts_to_update_df.loc[:,"Industry"] = "Government"
+        # upload the records to salesforce
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_update_df, 'Account', 'update', self.update_success_file, self.update_fallout_file)
+
+        #-----------------------------------------------------------------------
+        # 5) query the updated records and load results into a new DataFrame
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        account_query = """SELECT   AccountNumber,
+        account_query = """SELECT   Id,
+                                    AccountNumber,
                                     Name,
                                     NumberOfEmployees,
                                     NumberOfLocations__c,
@@ -263,20 +289,44 @@ class TestSalesforce_Utilities(unittest.TestCase):
         accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(account_query_results)
 
         #-----------------------------------------------------------------------
-        # 5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        # 6) clean up environment, delete inserted records
         #-----------------------------------------------------------------------
+        # create query for records to delete
+        # add field in salesforce and to df, unit_test_migrated_record = True,
+        # only delete these records in unit test
+        account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+        # query salesforce and return the accounts to be deleted
+        account_query_results = self.sf_utils.query_salesforce(sf, account_query)
+        # convert query results to a dataframe
+        accounts_to_delete_df = self.sf_utils.load_query_with_lookups_into_dataframe(account_query_results)
+        # delete the test records in salesforce
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_delete_df, 'Account', 'delete')
+
+        #-----------------------------------------------------------------------
+        # 7) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        #-----------------------------------------------------------------------
+        # re-order columns to match for comparison
+        accounts_to_update_df = accounts_to_update_df[list(accounts_df.columns)]
         # set the column datatypes so the comparison is on the data and not datatypes
-        column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'str', 'str')
+        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'str', 'str')
         # reformat the column datatypes of queried dataframe before comparing
         formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
         # reformat the column datatypes of the inserted dataframe before comparing
-        formatted_df_to_upload = self.utils.format_columns_dtypes(df_to_upload, column_types, True)
+        formatted_accounts_to_update_df = self.utils.format_columns_dtypes(accounts_to_update_df, column_types, True)
         # make sure to only compare the updated records
-        both_df, left_df, right_df = self.utils.get_df_diffs(formatted_df_to_upload, formatted_accounts_df, left_on = "Account_Number_External_ID__c", right_on = "Account_Number_External_ID__c", suffixes = None)
-
+        both_df, left_df, right_df = self.utils.get_df_diffs(formatted_accounts_to_update_df, formatted_accounts_df, left_on = ["Account_Number_External_ID__c"], right_on = ["Account_Number_External_ID__c"])
+        # drop all extra columns
+        both_df = both_df[["Id_left", "AccountNumber_left", "Name_left", "NumberOfEmployees_left",
+        "NumberofLocations__c_left", "Phone_left", "SLA__c_left","SLASerialNumber__c_left",
+        "Account_Number_External_ID__c", "Type_left","Industry_left"]]
+        # rename columns to match for assert comparison
+        both_df.rename(columns = {"Id_left" : "Id" , "AccountNumber_left" : "AccountNumber", "Name_left" : "Name", "NumberOfEmployees_left" : "NumberOfEmployees",
+        "NumberofLocations__c_left" : "NumberofLocations__c", "Phone_left" : "Phone", "SLA__c_left" : "SLA__c",
+        "SLASerialNumber__c_left" : "SLASerialNumber__c", "Type_left" : "Type", "Industry_left" : "Industry"}, inplace = True)
 
         # Assert the two dataframes are equal - finishing test
-        assert_frame_equal(formatted_accounts_df, both_df)
+        # formatted_accounts_to_update_df and both_df shoould both be the same size with the same values
+        assert_frame_equal(formatted_accounts_to_update_df, both_df)
 
     def test_successful_salesforce_login_upsert_then_query(self):
         """Description: This test performs the following operations
