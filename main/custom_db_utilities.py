@@ -1216,6 +1216,28 @@ class Custom_Utilities:
             # log error when merging and return tuple of df diff
             log.exception(f"[Error merging and return tuple of df diff...{e}]")
 
+    def get_slice_of_dataframe(self, df, starting_index, number_of_records):
+        """
+        Description:
+        Parameters:
+
+        df                  - pandas dataframe to slice
+        starting_index      - int, starting index/row to pull records from dataframe
+        number_of_records   - how many records to grab from the dataframe
+
+        Return: tuple of three dataframes
+        """
+        # try except block
+        try:
+            # log to console slicing of dataframe is occuring
+            log.info(f"[Scliging dataframes from index: {starting_index} to {starting_index+number_of_records}...]")
+            # return the sliced dataframe
+            return df.iloc[starting_index : starting_index + number_of_records]
+        # exception block - error slicing dataframe
+        except Exception as e:
+            # log error when slicing dataframe
+            log.exception(f"[Error slicing dataframe, check range of slice...{e}]")
+
     def format_columns_dtypes(self, df):
         """
         Description: reformat dataframe columns before merge,
