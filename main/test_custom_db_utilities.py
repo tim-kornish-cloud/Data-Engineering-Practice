@@ -90,9 +90,11 @@ class TestSalesforce_Utilities(unittest.TestCase):
             }
         ]
         # create instance of credentials class where creds are stored to load into the test functions
-        self.credentials = Cred = Credentials()
+        self.credentials = Credentials()
         # create instance of custom utilities class to modifying datasets and comparing
         self.utils = Custom_Utilities()
+        # create instance of salesforce utility class
+        self.sf_utils = Salesforce_Utilities()
         # set input path for mock data csv
         self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
         # read the mock data csv into a pandas dataframe at the beginning of every test
@@ -123,14 +125,15 @@ class TestSalesforce_Utilities(unittest.TestCase):
         #-----------------------------------------------------------------------
         # 1) create login to salesforce
         #-----------------------------------------------------------------------
+
         # get username from credentials
-        username = Cred.get_username(database, environment)
+        username = self.credentials.get_username("Salesforce", "Dev")
         # get password from credentials
-        password = Cred.get_password(database, environment)
+        password = self.credentials.get_password("Salesforce", "Dev")
         # get login token from credentials
-        token = Cred.get_token(database, environment)
+        token = self.credentials.get_token("Salesforce", "Dev")
         # create a instance of simple_salesforce to query and perform operations against salesforce with
-        sf = SF_Utils.login_to_salesForce(username, password, token)
+        sf = self.sf_utils.login_to_salesForce(username, password, token)
 
         #-----------------------------------------------------------------------
         # 2) load a mock csv data into a dataframe and keep a slice of length 10
@@ -140,37 +143,43 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # set number of records to keep
         number_of_records = 10
         # select only 10 records
-        df_to_upload = self.utils.get_slice_of_dataframe(self, self.mock_data_df, starting_index, number_of_records)
+        df_to_upload = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
 
         #-----------------------------------------------------------------------
         # 3) upload the dataframe to Salesforce to insert 10 records
         #-----------------------------------------------------------------------
         # upload the records to salesforce
-        SF_Utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
+        self.sf_utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
 
         #-----------------------------------------------------------------------
         # 4) query the inserted records and load results into a new DataFrame
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        account_query = """SELECT   Id, AccountNumber,
+        account_query = """SELECT   AccountNumber,
                                     Name,
                                     NumberOfEmployees,
-                                    NumberOfLocations,
+                                    NumberOfLocations__c,
                                     Phone,
                                     SLA__c,
                                     SLASerialNumber__c,
                                     Account_Number_ExternaL_ID__c
                             FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"""
         # query salesforce and return the accounts just inserted
-        account_query_results = SF_Utils.query_salesforce(sf, account_query)
+        account_query_results = self.sf_utils.query_salesforce(sf, account_query)
         # convert query results to a dataframe
-        accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
+        accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(account_query_results)
 
         #-----------------------------------------------------------------------
         # 5) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
         #-----------------------------------------------------------------------
+        # set the column datatypes so the comparison is on the data and not datatypes
+        column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
+
+        formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
+        formatted_df_to_upload = self.utils.format_columns_dtypes(df_to_upload, column_types, True)
+
         # Assert the two dataframes are equal
-        assert_frame_equal(df_to_upload, accounts_df)
+        assert_frame_equal(formatted_accounts_df, formatted_df_to_upload)
 
     def test_successful_salesforce_login_update_then_query(self):
         """Description: This test performs the following operations
