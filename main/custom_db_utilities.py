@@ -29,7 +29,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import pymysql
 import mysql.connector
-#MongoDB
+# MongoDB
 from pymongo import MongoClient
 
 # initialize the console logging to aid in time estimate of execution scripts
