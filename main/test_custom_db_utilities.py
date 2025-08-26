@@ -80,14 +80,19 @@ class TestSalesforce_Utilities(unittest.TestCase):
         self.mongosb_utils  = MongoDB_Utilities()
 
         # set input path for mock data csv
-        self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
+        self.input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_unit_test.csv"
         # read the mock data csv into a pandas dataframe at the beginning of every test
         self.mock_data_df = pd.read_csv(self.input_csv_file)
         # update success file path
         self.update_success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + self.sf_environment + "_" + self.sf_database + ".csv"
         # update fallout file path
         self.update_fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + self.sf_environment + "_" + self.sf_database + ".csv"
+        # upsert success file path
+        self.upsert_success_file = dir_path + "\\Output\\UPSERT\\SUCCESS_Upsert_" + self.sf_environment + "_" + self.sf_database + ".csv"
+        # upsert fallout file path
+        self.upsert_fallout_file = dir_path + "\\Output\\UPSERT\\FALLOUT_Upsert_" + self.sf_environment + "_" + self.sf_database + ".csv"
 
+    #@unittest.skip("complete, comment line to retest")
     def test_successful_salesforce_login_insert_then_query(self):
         """Description: This test performs the following operations
 
@@ -152,8 +157,9 @@ class TestSalesforce_Utilities(unittest.TestCase):
                                     Phone,
                                     SLA__c,
                                     SLASerialNumber__c,
-                                    Account_Number_ExternaL_ID__c
-                            FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"""
+                                    Account_Number_ExternaL_ID__c,
+                                    Unit_test_migrated_record__c
+                            FROM Account WHERE Unit_test_migrated_record__c = true"""
         # query salesforce and return the accounts just inserted
         account_query_results = self.sf_utils.query_salesforce(sf, account_query)
         # convert query results to a dataframe
@@ -165,7 +171,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # create query for records to delete
         # add field in salesforce and to df, unit_test_migrated_record = True,
         # only delete these records in unit test
-        account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+        account_query = "SELECT Id FROM Account WHERE Unit_test_migrated_record__c = true"
         # query salesforce and return the accounts to be deleted
         account_query_results = self.sf_utils.query_salesforce(sf, account_query)
         # convert query results to a dataframe
@@ -178,7 +184,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # 6) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
         #-----------------------------------------------------------------------
         # set the column datatypes so the comparison is on the data and not datatypes
-        column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str')
+        column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool')
         # reformat the column datatypes of queried dataframe before comparing
         formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
         # reformat the column datatypes of the inserted dataframe before comparing
@@ -187,8 +193,8 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # Assert the two dataframes are equal - finishing test
         assert_frame_equal(formatted_accounts_df, formatted_df_to_upload)
 
-
-    def test_successful_salesforce_login_update_then_query(self):
+    #@unittest.skip("complete, comment line to retest")
+    def test_successful_salesforce_login_insert_and_update_then_query(self):
         """Description: This test performs the following operations
 
         1) create login to salesforce
@@ -244,7 +250,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # match queried accounts with CSV accounts based on join of accountNumber field
         # query string to select records from salesforce
         # before uploading with a delete  DML operation
-        account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+        account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Unit_test_migrated_record__c = true"
 
         # query salesforce and return the accounts to be deleted
         account_query_results = self.sf_utils.query_salesforce(sf, account_query)
@@ -254,7 +260,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         accounts_df = self.utils.encode_df(accounts_df)
         # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
         accounts_to_update_df = self.utils.merge_dfs(accounts_df, df_to_upload, left_on = ['Account_Number_External_ID__c'], right_on = ['Account_Number_External_ID__c'], how = 'inner', suffixes = ('_SF', '_CSV'), indicator = False)
-        #drop extra columns, and rename columns to be kept
+
 
         #-----------------------------------------------------------------------
         # 4) query inserted records to retrieve salesforce record IDs
@@ -280,9 +286,10 @@ class TestSalesforce_Utilities(unittest.TestCase):
                                     SLA__c,
                                     SLASerialNumber__c,
                                     Account_Number_External_ID__c,
+                                    Unit_test_migrated_record__c,
                                     Type,
                                     Industry
-                            FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"""
+                            FROM Account WHERE Unit_test_migrated_record__c = true"""
         # query salesforce and return the accounts just inserted
         account_query_results = self.sf_utils.query_salesforce(sf, account_query)
         # convert query results to a dataframe
@@ -294,7 +301,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # create query for records to delete
         # add field in salesforce and to df, unit_test_migrated_record = True,
         # only delete these records in unit test
-        account_query = "SELECT Id FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+        account_query = "SELECT Id FROM Account WHERE Unit_test_migrated_record__c = true"
         # query salesforce and return the accounts to be deleted
         account_query_results = self.sf_utils.query_salesforce(sf, account_query)
         # convert query results to a dataframe
@@ -308,7 +315,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # re-order columns to match for comparison
         accounts_to_update_df = accounts_to_update_df[list(accounts_df.columns)]
         # set the column datatypes so the comparison is on the data and not datatypes
-        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'str', 'str')
+        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str')
         # reformat the column datatypes of queried dataframe before comparing
         formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
         # reformat the column datatypes of the inserted dataframe before comparing
@@ -317,27 +324,33 @@ class TestSalesforce_Utilities(unittest.TestCase):
         both_df, left_df, right_df = self.utils.get_df_diffs(formatted_accounts_to_update_df, formatted_accounts_df, left_on = ["Account_Number_External_ID__c"], right_on = ["Account_Number_External_ID__c"])
         # drop all extra columns
         both_df = both_df[["Id_left", "AccountNumber_left", "Name_left", "NumberOfEmployees_left",
-        "NumberofLocations__c_left", "Phone_left", "SLA__c_left","SLASerialNumber__c_left",
+        "NumberofLocations__c_left", "Phone_left", "SLA__c_left","SLASerialNumber__c_left", "Unit_test_migrated_record__c_left",
         "Account_Number_External_ID__c", "Type_left","Industry_left"]]
         # rename columns to match for assert comparison
         both_df.rename(columns = {"Id_left" : "Id" , "AccountNumber_left" : "AccountNumber", "Name_left" : "Name", "NumberOfEmployees_left" : "NumberOfEmployees",
         "NumberofLocations__c_left" : "NumberofLocations__c", "Phone_left" : "Phone", "SLA__c_left" : "SLA__c",
-        "SLASerialNumber__c_left" : "SLASerialNumber__c", "Type_left" : "Type", "Industry_left" : "Industry"}, inplace = True)
-
+        "SLASerialNumber__c_left" : "SLASerialNumber__c", "Unit_test_migrated_record__c_left" : "Unit_test_migrated_record__c", "Type_left" : "Type", "Industry_left" : "Industry"}, inplace = True)
+        # remove extra columns to match for assert comparison
+        both_df = both_df[["Id", "AccountNumber", "Name", "NumberOfEmployees", "NumberofLocations__c", "Phone", "SLA__c","SLASerialNumber__c", "Unit_test_migrated_record__c",
+        "Account_Number_External_ID__c", "Type","Industry"]]
+        # re-order columns for assert  comparison
+        formatted_accounts_to_update_df = formatted_accounts_to_update_df[list(both_df.columns)]
         # Assert the two dataframes are equal - finishing test
         # formatted_accounts_to_update_df and both_df shoould both be the same size with the same values
         assert_frame_equal(formatted_accounts_to_update_df, both_df)
 
-    def test_successful_salesforce_login_upsert_then_query(self):
+    @unittest.skip("in progress")
+    def test_successful_salesforce_login_insert_and_upsert_then_query(self):
         """Description: This test performs the following operations
 
         1) create login to salesforce
         2) load a dictionary record into a dataframe of length 10
-        3) choose 5 that are already loaded and 5 new.
-        4) upload the dataframe to Salesforce to upsert all test records
-        5) query the record and load results into a new DataFrame
-        6) clean up environment, delete inserted records
-        7) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        3) insert a dataframe of records into salesforce
+        4) get 5 new records and 5 overlapping records then upload the dataframe to Salesforce to upsert all test records
+        5) query the upserted records and load results into a new DataFrame
+        6) query the insert and not upserted records to confirm they didn't get updated
+        7) clean up environment, delete inserted records
+        8) pandas testing assert dataframes are equal (upsert dataframe, queried dataframe)
 
         This test covers the functions from Salesforce_Utilities:
             - login_to_salesForce
@@ -352,6 +365,132 @@ class TestSalesforce_Utilities(unittest.TestCase):
 
         DML operations included: UPSERT, SELECT
         """
+        #-----------------------------------------------------------------------
+        # 1) create login to salesforce
+        #-----------------------------------------------------------------------
+        # get username from credentials
+        username = self.credentials.get_username(self.sf_database, self.sf_environment)
+        # get password from credentials
+        password = self.credentials.get_password(self.sf_database, self.sf_environment)
+        # get login token from credentials
+        token = self.credentials.get_token(self.sf_database, self.sf_environment)
+        # create a instance of simple_salesforce to query and perform operations against salesforce with
+        sf = self.sf_utils.login_to_salesForce(username, password, token)
+
+        #-----------------------------------------------------------------------
+        # 2) load a mock csv data into a dataframe and keep a slice of length 10
+        #-----------------------------------------------------------------------
+        # set record start index
+        starting_index = 0
+        # set number of records to keep
+        number_of_records = 10
+        # select only 10 records
+        df_to_upload = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
+
+        #-----------------------------------------------------------------------
+        # 3) insert a dataframe of records into salesforce
+        #-----------------------------------------------------------------------
+        # upload the records to salesforce
+        self.sf_utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
+
+        #-----------------------------------------------------------------------
+        # 4) get 5 new records and 5 overlapping records then upload the dataframe to Salesforce to upsert all test records
+        #-----------------------------------------------------------------------
+        # set record start index
+        starting_index = 5
+        # set number of records to keep
+        number_of_records = 10
+        # select only 10 records
+        accounts_to_upsert_df = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
+
+
+        # add new columns in the DataFrame to update records in salesforce
+        # add new column called type and set all accounts to Prospect
+        accounts_to_upsert_df.loc[:,"Type"] = "Prospect"
+        # add new column called Industry and set all accounts to government
+        accounts_to_upsert_df.loc[:,"Industry"] = "Government"
+        # upload the records to salesforce
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_upsert_df, 'Account', 'upsert', self.upsert_success_file, self.upsert_fallout_file)
+
+        #-----------------------------------------------------------------------
+        # 5) query the updated records and load results into a new DataFrame
+        #-----------------------------------------------------------------------
+        # query the inserted records and load results into a new DataFrame
+        upserted_account_query = """SELECT   Id,
+                                    AccountNumber,
+                                    Name,
+                                    NumberOfEmployees,
+                                    NumberOfLocations__c,
+                                    Phone,
+                                    SLA__c,
+                                    SLASerialNumber__c,
+                                    Account_Number_External_ID__c,
+                                    Unit_test_migrated_record__c,
+                                    Type,
+                                    Industry
+                            FROM Account WHERE Unit_test_migrated_record__c = true AND Type = 'Prospect'"""
+        # query salesforce and return the accounts just inserted
+        upserted_account_query_results = self.sf_utils.query_salesforce(sf, upserted_account_query)
+        # convert query results to a dataframe
+        upserted_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(upserted_account_query_results)
+
+        #-----------------------------------------------------------------------
+        # 6) query the insert and not upserted records to confirm they didn't get updated
+        #-----------------------------------------------------------------------
+
+        #-----------------------------------------------------------------------
+        # 7) clean up environment, delete inserted records
+        #-----------------------------------------------------------------------
+        # create query for records to delete
+        # add field in salesforce and to df, unit_test_migrated_record = True,
+        # only delete these records in unit test
+        account_query = "SELECT Id FROM Account WHERE Unit_test_migrated_record__c = true"
+        # query salesforce and return the accounts to be deleted
+        account_query_results = self.sf_utils.query_salesforce(sf, account_query)
+        # convert query results to a dataframe
+        accounts_to_delete_df = self.sf_utils.load_query_with_lookups_into_dataframe(account_query_results)
+        # delete the test records in salesforce
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_delete_df, 'Account', 'delete')
+
+        #-----------------------------------------------------------------------
+        # 8) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        #-----------------------------------------------------------------------
+        print("1")
+        print(accounts_to_upsert_df.columns)
+        # re-order columns to match for comparison
+        accounts_to_upsert_df = accounts_to_upsert_df[list(accounts_df.columns)]
+        print("2")
+        print(accounts_df.columns)
+        print("3")
+        print(accounts_to_upsert_df.columns)
+
+        # set the column datatypes so the comparison is on the data and not datatypes
+        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str')
+        # reformat the column datatypes of queried dataframe before comparing
+        formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
+        # reformat the column datatypes of the inserted dataframe before comparing
+        formatted_accounts_to_upsert_df = self.utils.format_columns_dtypes(accounts_to_upsert_df, column_types, True)
+        # make sure to only compare the updated records
+        both_df, left_df, right_df = self.utils.get_df_diffs(formatted_accounts_to_upsert_df, formatted_accounts_df, left_on = ["Account_Number_External_ID__c"], right_on = ["Account_Number_External_ID__c"])
+        # drop all extra columns
+        both_df = both_df[["Id_left", "AccountNumber_left", "Name_left", "NumberOfEmployees_left",
+        "NumberofLocations__c_left", "Phone_left", "SLA__c_left","SLASerialNumber__c_left",
+        "Account_Number_External_ID__c", "Type_left","Industry_left"]]
+        # rename columns to match for assert comparison
+        both_df.rename(columns = {"Id_left" : "Id" ,
+                                  "AccountNumber_left" : "AccountNumber",
+                                  "Name_left" : "Name",
+                                  "NumberOfEmployees_left" : "NumberOfEmployees",
+                                  "NumberofLocations__c_left" : "NumberofLocations__c",
+                                  "Phone_left" : "Phone",
+                                  "SLA__c_left" : "SLA__c",
+                                  "SLASerialNumber__c_left" : "SLASerialNumber__c",
+                                  "Type_left" : "Type",
+                                  "Industry_left" : "Industry"}, inplace = True)
+
+        # Assert the two dataframes are equal - finishing test
+        # formatted_accounts_to_upsert_df and both_df shoould both be the same size with the same values
+        assert_frame_equal(formatted_accounts_to_upsert_df, both_df)
 
 
 if __name__ == '__main__':
