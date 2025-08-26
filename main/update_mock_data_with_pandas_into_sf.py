@@ -71,7 +71,7 @@ sf = SF_Utils.login_to_salesForce(username, password, token)
 # match queried accounts with CSV accounts based on join of accountNumber field
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
-account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE CreatedBy.Name = 'Timothy Kornish'"
+account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Unit_test_migrated_record__c = true"
 
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
