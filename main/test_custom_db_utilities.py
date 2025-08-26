@@ -92,7 +92,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # upsert fallout file path
         self.upsert_fallout_file = dir_path + "\\Output\\UPSERT\\FALLOUT_Upsert_" + self.sf_environment + "_" + self.sf_database + ".csv"
 
-    #@unittest.skip("complete, comment line to retest")
+    @unittest.skip("complete, comment line to retest")
     def test_successful_salesforce_login_insert_then_query(self):
         """Description: This test performs the following operations
 
@@ -193,7 +193,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # Assert the two dataframes are equal - finishing test
         assert_frame_equal(formatted_accounts_df, formatted_df_to_upload)
 
-    #@unittest.skip("complete, comment line to retest")
+    @unittest.skip("complete, comment line to retest")
     def test_successful_salesforce_login_insert_and_update_then_query(self):
         """Description: This test performs the following operations
 
@@ -339,7 +339,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # formatted_accounts_to_update_df and both_df shoould both be the same size with the same values
         assert_frame_equal(formatted_accounts_to_update_df, both_df)
 
-    @unittest.skip("in progress")
+    #@unittest.skip("in progress")
     def test_successful_salesforce_login_insert_and_upsert_then_query(self):
         """Description: This test performs the following operations
 
@@ -402,7 +402,6 @@ class TestSalesforce_Utilities(unittest.TestCase):
         number_of_records = 10
         # select only 10 records
         accounts_to_upsert_df = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
-
 
         # add new columns in the DataFrame to update records in salesforce
         # add new column called type and set all accounts to Prospect
