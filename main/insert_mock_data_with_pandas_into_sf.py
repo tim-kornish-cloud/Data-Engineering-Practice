@@ -41,12 +41,12 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # set up fallout ans success path to save files to
 # success file path
-success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Delete_" + environment + "_" + database + ".csv"
+success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Insert_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Delete_" + environment + "_" + database + ".csv"
+fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
-input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_unit_test.csv"
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
