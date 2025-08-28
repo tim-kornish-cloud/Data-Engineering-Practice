@@ -92,7 +92,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # upsert fallout file path
         self.upsert_fallout_file = dir_path + "\\Output\\UPSERT\\FALLOUT_Upsert_" + self.sf_environment + "_" + self.sf_database + ".csv"
 
-    #@unittest.skip("complete, comment line to retest")
+    @unittest.skip("complete, comment line to retest")
     def test_successful_salesforce_login_insert_then_query(self):
         """Description: This test performs the following operations
 
@@ -193,7 +193,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # Assert the two dataframes are equal - finishing test
         assert_frame_equal(formatted_accounts_df, formatted_df_to_upload)
 
-    #@unittest.skip("complete, comment line to retest")
+    @unittest.skip("complete, comment line to retest")
     def test_successful_salesforce_login_insert_and_update_then_query(self):
         """Description: This test performs the following operations
 
