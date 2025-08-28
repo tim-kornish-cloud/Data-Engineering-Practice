@@ -386,15 +386,24 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # set number of records to keep
         number_of_records = 10
         # select only 10 records
-        df_to_upload = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
-        # add custom field for tracking records insert records
-        df_to_upload.loc[:,"upsert_test_insert_only__c"] = True
+        accounts_to_insert_df = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
+        # add new columns in the DataFrame to help identify records in this unit test
+        # add new column called type and set all accounts to Technology Partner
+        accounts_to_upsert_df.loc[:,"Type"] = "Technology Partner"
+        # add new column called Industry and set all accounts to Engineering
+        accounts_to_upsert_df.loc[:,"Industry"] = "Engineering"
+        # add custom field for tracking records insert records, set to true for first 5 records
+        accounts_to_insert_df.loc[0:5,"upsert_test_insert_only__c"] = True
+        # add custom field for tracking records insert records, set to false for last 5 records
+        accounts_to_insert_df.loc[5:10,"upsert_test_insert_only__c"] = False
+        # add field to track if the record is upserted through an upsert call
+        accounts_to_insert_df.loc[0:10,"upsert_test_upserted__c"] = False
 
         #-----------------------------------------------------------------------
         # 3) insert a dataframe of records into salesforce
         #-----------------------------------------------------------------------
         # upload the records to salesforce
-        self.sf_utils.upload_dataframe_to_salesforce(sf, df_to_upload, 'Account', 'insert')
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert')
 
         #-----------------------------------------------------------------------
         # 4) get 5 new records and 5 overlapping records then upload the dataframe to Salesforce to upsert all test records
@@ -413,6 +422,8 @@ class TestSalesforce_Utilities(unittest.TestCase):
         accounts_to_upsert_df.loc[:,"Industry"] = "Government"
         # make sure to set the testing field to false for upserted records, overwrite 5 of the intersted records value
         accounts_to_upsert_df.loc[:,"upsert_test_insert_only__c"] = False
+        # add field to track if the record is upserted through an upsert call
+        accounts_to_insert_df.loc[:,"upsert_test_upserted__c"] = True
         # upload the records to salesforce
         self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_upsert_df, 'Account', 'upsert', self.upsert_success_file, self.upsert_fallout_file)
 
@@ -420,47 +431,64 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # 5) query the updated records and load results into a new DataFrame
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        upserted_account_query = """SELECT   Id,
-                                    AccountNumber,
-                                    Name,
-                                    NumberOfEmployees,
-                                    NumberOfLocations__c,
-                                    Phone,
-                                    SLA__c,
-                                    SLASerialNumber__c,
-                                    Account_Number_External_ID__c,
-                                    Unit_test_migrated_record__c,
-                                    Type,
-                                    Industry,
-                                    upsert_test_insert_only__c
-                            FROM Account WHERE Unit_test_migrated_record__c = true AND Type = 'Prospect'"""
+        queried_upserted_accounts_query = """SELECT   Id,
+                                             AccountNumber,
+                                             Name,
+                                             NumberOfEmployees,
+                                             NumberOfLocations__c,
+                                             Phone,
+                                             SLA__c,
+                                             SLASerialNumber__c,
+                                             Account_Number_External_ID__c,
+                                             Unit_test_migrated_record__c,
+                                             Type,
+                                             Industry,
+                                             upsert_test_insert_only__c,
+                                             upsert_test_upserted__c
+                                             FROM Account
+                                             WHERE Unit_test_migrated_record__c = true
+                                             AND Type = 'Prospect'"""
         # query salesforce and return the accounts just inserted
-        upserted_account_query_results = self.sf_utils.query_salesforce(sf, upserted_account_query)
+        queried_upserted_accounts_query_results = self.sf_utils.query_salesforce(sf, queried_upserted_accounts_query)
         # convert query results to a dataframe
-        upserted_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(upserted_account_query_results)
+        queried_upserted_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(queried_upserted_accounts_query_results)
 
         #-----------------------------------------------------------------------
         # 6) query the inserted and non-upserted records to confirm they didn't get updated
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        insert_only_account_query = """SELECT   Id,
-                                    AccountNumber,
-                                    Name,
-                                    NumberOfEmployees,
-                                    NumberOfLocations__c,
-                                    Phone,
-                                    SLA__c,
-                                    SLASerialNumber__c,
-                                    Account_Number_External_ID__c,
-                                    Unit_test_migrated_record__c,
-                                    Type,
-                                    Industry,
-                                    upsert_test_insert_only__c
-                            FROM Account WHERE Unit_test_migrated_record__c = true AND upsert_test_insert_only__c = true"""
+        queried_insert_only_accounts_query = """SELECT   Id,
+                                                AccountNumber,
+                                                Name,
+                                                NumberOfEmployees,
+                                                NumberOfLocations__c,
+                                                Phone,
+                                                SLA__c,
+                                                SLASerialNumber__c,
+                                                Account_Number_External_ID__c,
+                                                Unit_test_migrated_record__c,
+                                                Type,
+                                                Industry,
+                                                upsert_test_insert_only__c,
+                                                upsert_test_upserted__c
+                                                FROM Account
+                                                WHERE Unit_test_migrated_record__c = true
+                                                AND upsert_test_insert_only__c = true"""
         # query salesforce and return the accounts just inserted
-        insert_only_account_query_results = self.sf_utils.query_salesforce(sf, insert_only_account_query)
+        queried_insert_only_accounts_query_results = self.sf_utils.query_salesforce(sf, queried_insert_only_accounts_query)
         # convert query results to a dataframe
-        insert_only_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(insert_only_account_query_results)
+        queried_insert_only_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(queried_insert_only_accounts_query_results)
+
+        #separate the inserted records
+        # first set of 5 records to compare:  queried_insert_only_accounts_df, insert_and_upsert_df
+        insert_only_df = accounts_to_insert_df.iloc[0:5]
+        insert_and_upsert_df = accounts_to_insert_df.iloc[5:]
+        #separate the upserted records
+        update_from_upsert_df = accounts_to_upsert_df.iloc[0:5]
+        insert_from_upsert_df = accounts_to_upsert_df.iloc[5:]
+
+        # queried_upserted_accounts_df
+        queried_upserted_accounts_df
 
         #-----------------------------------------------------------------------
         # 7) clean up environment, delete inserted records
@@ -489,7 +517,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         print(accounts_to_upsert_df.columns)
 
         # set the column datatypes so the comparison is on the data and not datatypes
-        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str')
+        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str', 'bool', 'bool')
         # reformat the column datatypes of queried dataframe before comparing
         formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
         # reformat the column datatypes of the inserted dataframe before comparing
