@@ -389,9 +389,9 @@ class TestSalesforce_Utilities(unittest.TestCase):
         accounts_to_insert_df = self.utils.get_slice_of_dataframe(self.mock_data_df, starting_index, number_of_records)
         # add new columns in the DataFrame to help identify records in this unit test
         # add new column called type and set all accounts to Technology Partner
-        accounts_to_upsert_df.loc[:,"Type"] = "Technology Partner"
+        accounts_to_insert_df["Type"] = "Technology Partner"
         # add new column called Industry and set all accounts to Engineering
-        accounts_to_upsert_df.loc[:,"Industry"] = "Engineering"
+        accounts_to_insert_df["Industry"] = "Engineering"
         # add custom field for tracking records insert records, set to true for first 5 records
         accounts_to_insert_df.loc[0:5,"upsert_test_insert_only__c"] = True
         # add custom field for tracking records insert records, set to false for last 5 records
@@ -423,16 +423,15 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # make sure to set the testing field to false for upserted records, overwrite 5 of the intersted records value
         accounts_to_upsert_df.loc[:,"upsert_test_insert_only__c"] = False
         # add field to track if the record is upserted through an upsert call
-        accounts_to_insert_df.loc[:,"upsert_test_upserted__c"] = True
+        accounts_to_upsert_df.loc[:,"upsert_test_upserted__c"] = True
         # upload the records to salesforce
-        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_upsert_df, 'Account', 'upsert', self.upsert_success_file, self.upsert_fallout_file)
+        self.sf_utils.upload_dataframe_to_salesforce(sf, accounts_to_upsert_df, 'Account', 'upsert', success_file = self.upsert_success_file, fallout_file = self.upsert_fallout_file, external_id_field = "Account_Number_External_ID__c")
 
         #-----------------------------------------------------------------------
         # 5) query the updated records and load results into a new DataFrame
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        queried_upserted_accounts_query = """SELECT   Id,
-                                             AccountNumber,
+        queried_upserted_accounts_query = """SELECT AccountNumber,
                                              Name,
                                              NumberOfEmployees,
                                              NumberOfLocations__c,
@@ -447,7 +446,8 @@ class TestSalesforce_Utilities(unittest.TestCase):
                                              upsert_test_upserted__c
                                              FROM Account
                                              WHERE Unit_test_migrated_record__c = true
-                                             AND Type = 'Prospect'"""
+                                             AND upsert_test_upserted__c = true
+                                             AND upsert_test_insert_only__c = false"""
         # query salesforce and return the accounts just inserted
         queried_upserted_accounts_query_results = self.sf_utils.query_salesforce(sf, queried_upserted_accounts_query)
         # convert query results to a dataframe
@@ -457,8 +457,7 @@ class TestSalesforce_Utilities(unittest.TestCase):
         # 6) query the inserted and non-upserted records to confirm they didn't get updated
         #-----------------------------------------------------------------------
         # query the inserted records and load results into a new DataFrame
-        queried_insert_only_accounts_query = """SELECT   Id,
-                                                AccountNumber,
+        queried_insert_only_accounts_query = """SELECT AccountNumber,
                                                 Name,
                                                 NumberOfEmployees,
                                                 NumberOfLocations__c,
@@ -473,22 +472,12 @@ class TestSalesforce_Utilities(unittest.TestCase):
                                                 upsert_test_upserted__c
                                                 FROM Account
                                                 WHERE Unit_test_migrated_record__c = true
+                                                AND upsert_test_upserted__c = false
                                                 AND upsert_test_insert_only__c = true"""
         # query salesforce and return the accounts just inserted
         queried_insert_only_accounts_query_results = self.sf_utils.query_salesforce(sf, queried_insert_only_accounts_query)
         # convert query results to a dataframe
         queried_insert_only_accounts_df = self.sf_utils.load_query_with_lookups_into_dataframe(queried_insert_only_accounts_query_results)
-
-        #separate the inserted records
-        # first set of 5 records to compare:  queried_insert_only_accounts_df, insert_and_upsert_df
-        insert_only_df = accounts_to_insert_df.iloc[0:5]
-        insert_and_upsert_df = accounts_to_insert_df.iloc[5:]
-        #separate the upserted records
-        update_from_upsert_df = accounts_to_upsert_df.iloc[0:5]
-        insert_from_upsert_df = accounts_to_upsert_df.iloc[5:]
-
-        # queried_upserted_accounts_df
-        queried_upserted_accounts_df
 
         #-----------------------------------------------------------------------
         # 7) clean up environment, delete inserted records
@@ -506,43 +495,85 @@ class TestSalesforce_Utilities(unittest.TestCase):
 
         #-----------------------------------------------------------------------
         # 8) pandas testing assert dataframes are equal (original dataframe, queried dataframe)
+        # 8.1) assert insert through insert call only record's dataframes are equal and unchanged by upsert call
+        # 8.2) assert inserted then updated through upsert record's dataframes are equal
+        # 8.3) assert inserted through upsert call record's dataframes are equal
         #-----------------------------------------------------------------------
+        # set the column datatypes so the comparison is on the data and not datatypes of all three comparisons listed above
+        column_types = ('int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str', 'bool', 'bool')
+
         print("1")
-        print(accounts_to_upsert_df.columns)
-        # re-order columns to match for comparison
-        accounts_to_upsert_df = accounts_to_upsert_df[list(accounts_df.columns)]
+        print(accounts_to_insert_df.columns)
+        print(accounts_to_insert_df.head(10))
         print("2")
-        print(accounts_df.columns)
-        print("3")
         print(accounts_to_upsert_df.columns)
+        print(accounts_to_upsert_df.head(10))
+        print("3")
+        print(queried_insert_only_accounts_df.columns)
+        print(queried_insert_only_accounts_df.head(10))
+        print("4")
+        print(queried_upserted_accounts_df.columns)
+        print(queried_upserted_accounts_df.head(10))
 
-        # set the column datatypes so the comparison is on the data and not datatypes
-        column_types = ('str', 'int', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'bool', 'str', 'str', 'bool', 'bool')
-        # reformat the column datatypes of queried dataframe before comparing
-        formatted_accounts_df = self.utils.format_columns_dtypes(accounts_df, column_types, True)
-        # reformat the column datatypes of the inserted dataframe before comparing
-        formatted_accounts_to_upsert_df = self.utils.format_columns_dtypes(accounts_to_upsert_df, column_types, True)
-        # make sure to only compare the updated records
-        both_df, left_df, right_df = self.utils.get_df_diffs(formatted_accounts_to_upsert_df, formatted_accounts_df, left_on = ["Account_Number_External_ID__c"], right_on = ["Account_Number_External_ID__c"])
-        # drop all extra columns
-        both_df = both_df[["Id_left", "AccountNumber_left", "Name_left", "NumberOfEmployees_left",
-        "NumberofLocations__c_left", "Phone_left", "SLA__c_left","SLASerialNumber__c_left",
-        "Account_Number_External_ID__c", "Type_left","Industry_left"]]
-        # rename columns to match for assert comparison
-        both_df.rename(columns = {"Id_left" : "Id" ,
-                                  "AccountNumber_left" : "AccountNumber",
-                                  "Name_left" : "Name",
-                                  "NumberOfEmployees_left" : "NumberOfEmployees",
-                                  "NumberofLocations__c_left" : "NumberofLocations__c",
-                                  "Phone_left" : "Phone",
-                                  "SLA__c_left" : "SLA__c",
-                                  "SLASerialNumber__c_left" : "SLASerialNumber__c",
-                                  "Type_left" : "Type",
-                                  "Industry_left" : "Industry"}, inplace = True)
 
-        # Assert the two dataframes are equal - finishing test
-        # formatted_accounts_to_upsert_df and both_df shoould both be the same size with the same values
-        assert_frame_equal(formatted_accounts_to_upsert_df, both_df)
+        # 8.1)
+        print("8.1)")
+        # separate the inserted records based on if they will receive an update from the upsert call
+        # do not need to reset the index of any dataframe in 8.1 since the slicing starts at index 0
+        # compare insert only, confirm not altered by upsert call
+        insert_only_df = accounts_to_insert_df.iloc[0:5]
+        print(insert_only_df.columns)
+        # queried_insert_only_accounts_df
+        # queried_insert_only_accounts_df
+        print(queried_insert_only_accounts_df.columns)
+        #reformat columns of insert only accounts
+        formatted_insert_only_df = self.utils.format_columns_dtypes(insert_only_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_insert_only_df.reset_index(inplace = True, drop = True)
+        # reformat columns of queried records
+        formatted_queried_insert_only_accounts_df = self.utils.format_columns_dtypes(queried_insert_only_accounts_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_queried_insert_only_accounts_df.reset_index(inplace = True, drop = True)
+
+        # 8.2)
+        print("8.2)")
+        # compare insert then updated through upsert
+        insert_then_upsert_df = accounts_to_upsert_df.iloc[0:5]
+        print(insert_then_upsert_df.columns)
+        #
+        queried_updated_through_upsert_accounts_df = queried_upserted_accounts_df.iloc[0:5]
+        print(queried_updated_through_upsert_accounts_df.columns)
+        #reformat columns of insert only accounts
+        formatted_insert_then_upsert_df = self.utils.format_columns_dtypes(insert_then_upsert_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_insert_then_upsert_df.reset_index(inplace = True, drop = True)
+        # reformat columns of queried records
+        formatted_queried_updated_through_upsert_accounts_df = self.utils.format_columns_dtypes(queried_updated_through_upsert_accounts_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_queried_updated_through_upsert_accounts_df.reset_index(inplace = True, drop = True)
+
+        # 8.3)
+        print("8.3)")
+        # compare inserted through upsert call
+        insert_only_from_upsert_df = accounts_to_upsert_df.iloc[5:10]
+        print(insert_only_from_upsert_df.columns)
+        queried_inserted_through_upsert_accounts_df = queried_upserted_accounts_df.iloc[5:10]
+        print(queried_inserted_through_upsert_accounts_df.columns)
+        #reformat columns of insert only accounts
+        formatted_insert_only_from_upsert_df = self.utils.format_columns_dtypes(insert_only_from_upsert_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_insert_only_from_upsert_df.reset_index(inplace = True, drop = True)
+        # reformat columns of queried records
+        formatted_queried_inserted_through_upsert_accounts_df = self.utils.format_columns_dtypes(queried_inserted_through_upsert_accounts_df, column_types, True)
+        # reset the index of the reformatted dataframe since the index starts at 5 instead of 0
+        formatted_queried_inserted_through_upsert_accounts_df.reset_index(inplace = True, drop = True)
+
+        # assert 8.1)
+        assert_frame_equal(formatted_insert_only_df, formatted_queried_insert_only_accounts_df)
+        # assert 8.2)
+        assert_frame_equal(formatted_insert_then_upsert_df, formatted_queried_updated_through_upsert_accounts_df)
+        # assert 8.3)
+        assert_frame_equal(formatted_insert_only_from_upsert_df, formatted_queried_inserted_through_upsert_accounts_df)
 
 
 if __name__ == '__main__':
