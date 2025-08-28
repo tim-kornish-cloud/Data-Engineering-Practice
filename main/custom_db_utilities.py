@@ -1240,8 +1240,10 @@ class Custom_Utilities:
         try:
             # log to console slicing of dataframe is occuring
             log.info(f"[Scliging dataframes from index: {starting_index} to {starting_index+number_of_records}...]")
+            # create df_to_return variable to not slice original df
+            df_to_return = df.iloc[starting_index : starting_index + number_of_records]
             # return the sliced dataframe
-            return df.iloc[starting_index : starting_index + number_of_records]
+            return df_to_return
         # exception block - error slicing dataframe
         except Exception as e:
             # log error when slicing dataframe
