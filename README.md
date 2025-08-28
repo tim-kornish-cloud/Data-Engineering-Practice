@@ -92,6 +92,12 @@ This is a mock project for migrating data setting up database to database integr
 ---
 # Unit Testing
 
-## using unittest
+### test_custom_db_utilities.py
 
-### Setting up Unit tests for custom_db_utilities.py in test_custom_db_utilities.py
+Current Unit Tests:
+- test_successful_salesforce_login_insert_then_query
+- test_successful_salesforce_login_insert_and_update_then_query
+- test_successful_salesforce_login_insert_and_upsert_then_query
+
+Stopping unit test to focus on AWS (8/28/25), may come back in future to build out more,
+but these will suffice as solid examples for future unit tests.
