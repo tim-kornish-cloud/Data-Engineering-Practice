@@ -98,7 +98,7 @@ Current Unit Tests:
 - test_successful_salesforce_login_insert_then_query
 - test_successful_salesforce_login_insert_and_update_then_query
 - test_successful_salesforce_login_insert_and_upsert_then_query
-  - note this last test seems to only work when ran solo, and will fail when rain with a full regression test
+  - note this last test seems to only work when ran solo, and will fail when ran with a full regression test
 
 Stopping unit test to focus on AWS (8/28/25), may come back in future to build out more,
 but these will suffice as solid examples for future unit tests.
