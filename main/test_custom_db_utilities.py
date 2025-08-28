@@ -3,6 +3,16 @@ Author: Timothy Kornish
 CreatedDate: August - 25 - 2025
 Description: test class for all database operations from custom_db_utilities.py
 
+ - Current Unit Tests:
+    - test_successful_salesforce_login_insert_then_query
+    - test_successful_salesforce_login_insert_and_update_then_query
+    - test_successful_salesforce_login_insert_and_upsert_then_query
+
+Stopping unit test to focus on AWS (8/28/25), may come back in future to build out more,
+but these will suffice as solid examples for future unit tests.
+
+Note - Re-ordering the formatting to before the dataframes are uploaded to show
+       as little alteration post upload as possible will be a better design, but not critical at the moment
 """
 
 import unittest
@@ -553,7 +563,6 @@ class TestSalesforce_Utilities(unittest.TestCase):
         assert_frame_equal(formatted_insert_then_upsert_df, formatted_queried_updated_through_upsert_accounts_df)
         # assert 8.3)
         assert_frame_equal(formatted_insert_only_from_upsert_df, formatted_queried_inserted_through_upsert_accounts_df)
-
 
 if __name__ == '__main__':
     unittest.main()
