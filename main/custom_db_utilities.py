@@ -31,6 +31,8 @@ import pymysql
 import mysql.connector
 # MongoDB
 from pymongo import MongoClient
+# psycopg2 for connecting postgresql database
+import psycopg2
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
@@ -1139,6 +1141,232 @@ class MongoDB_Utilities:
         except Exception as e:
             # log error when attempting to update records in mongodb collection
             log.exception(f"[Error updating records in mongodb collection...{e}]")
+
+class Postgres_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+
+           can add login credentials as instance variables to utilize in functions
+        """
+
+    def login_to_mssql(self, host="localhost", database="financial_db", user="postgres", password="postgres", port=5432):
+        """
+        Description: login to a MSSQL server and return a cursor object to query with
+        Parameters:
+
+        driver                      - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
+        server                      - string, IP address of server, I.E. 127.0.0.1
+        database                    - string, Database name
+        Username                    - string, MSSQL server Username
+        Password                    - string, MSSQL server Password
+        use_windows_authentication  - bool, use window authentication instead of a username and password
+        trusted_connection          - string, values = 'yes', 'no'
+
+        Return:         - MSSQL cursor
+        """
+        # try except block
+        try:
+
+            # log to console status of logging into database
+            log.info(f"[Logging into MSSQL DB using windows Auth on DB: {database}]")
+            # establish a connection
+            cursor_connection = psycopg2.connect(host="localhost",
+                                                 database="financial_db",
+                                                 user="postgres",
+                                                 password="postgres",
+                                                 port=5432
+                                                 )
+
+            # convert the instance to a cursor
+            cursor = cursor_connection.cursor()
+            # log to console the cursor is created
+            log.info("[Creating Cursor]")
+            # return the connection and cursor to use to query against the database
+            return (cursor_connection, cursor)
+        # exception block - error
+        except Exception as e:
+            # log error when
+            log.exception(f"[Error Logging into MSSQL DB...{e}]")
+
+    def query_postgres_return_dataframe(self, query, cursor):
+        """
+        Description: query a Postgres server with a logged in cursor and
+        process results into a pandas dataframe the return the dataframe.
+        Parameters:
+
+        query           - query string
+        cursor          - cursor creating upon login to execute the query
+
+        Return:         - pandas.DataFrame
+        """
+        # try except block
+        try:
+            # log to console beginning query against postgres database
+            log.info("[Querying MS SQL DB...]")
+            # execute query with cursor
+            cursor = cursor.execute(query)
+            # convert the results into a list of columns
+            columns = [column[0] for column in cursor.description]
+            # log to console status of querying records
+            log.info("[Condensing results into Dict...]")
+            # convert the columns and rows of data into a list of dicts
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            # log to console status of querying records
+            log.info("[transforming Dict into DataFrame...]")
+            # convert the list of dicts into a pandas dataframe
+            results_df = pd.DataFrame(results)
+            # log to console status of querying records
+            log.info(f"[loaded {str(len(results_df))} records into DataFrame]")
+            # return the results of the query as a pandas data frame
+            return results_df
+        # exception block - error querying postgres table
+        except Exception as e:
+            # log error when querying postgres table
+            log.exception(f"[Error querying postgres table...{e}]")
+
+    def insert_dataframe_into_postgres_table(self, connection, cursor, df, table_name, column_types = [], cols = "", use_all_columns_in_df = True, close_connection = True):
+        """Description: insert a dataframe into a postgres table, the whole dataframe will be inserted
+        Parameters:
+
+        connection              - Postgres database connection
+        cursor                  - Postgres connection cursor
+        df                      - dataframe to insert
+        table_name              - table name of database to insert records into
+        column_types            - set column datatypes before insert, auto datatype setting can sometimes be inaccurate
+        cols                    - list of columns, currently experimental
+        use_all_columns_in_df   - boolean to use all columns or not, currently experimental
+        close_connection        - boolean, close connection after insert.
+
+        return:                 - none - insert records into postgres # DEBUG:
+        Current issue 8/11/25:
+        # current method causes warning with chained indexing instead of using .loc or .iloc
+        # error is just making a getattr call twice instead of once and some other things that improve speed but not a breaking issue
+        # will update to .loc/.iloc at a later point, just need a working function for now
+
+        """
+        # try except block
+        try:
+            # if the df column list matches the table, use all columns
+            if use_all_columns_in_df:
+                # generate a list of all columns
+                cols = ",".join([k for k in df.dtypes.index])
+            # generate a list of "?" to be replaced by the actual values of the dataframe
+            params = ",".join("?" * len(df.columns))
+            # generate the sql commit with the dataframe
+            sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(table_name, cols, params)
+
+            # for loop only works when provided a list of column converted types
+            log.info("[Converting data types in DataFrame...]")
+            # loop through each column to convert the type every value
+            for index, col in enumerate(df.columns):
+                # confirm the index is still within range of acceptable indexes
+                if index < len(column_types):
+                    # check if type == int
+                    if column_types[index] == "int":
+                        df[col] = df[col].astype(int)
+                    # check if type == string
+                    if column_types[index] == "str":
+                        df[col] = df[col].astype(str)
+                    # check if type == float
+                    if column_types[index] == "float":
+                        df[col] = df[col].astype(float)
+                    # check if type == boolean
+                    if column_types[index] == "bool":
+                        df[col] = df[col].astype(bool)
+            # convert the rows in the dataframe into tuples
+            data = [tuple(x) for x in df.values]
+            # set the bulk insert for pyodbc cursor.fast_executemany = True
+            cursor.fast_executemany = True
+            # execute insert of records
+            cursor.executemany(sql, data)
+            # commit the sql statement
+            connection.commit()
+            # close the connection if desired
+            if close_connection:
+                # close the connection
+                connection.close()
+        # exception block - error inserting dataframe into postgres table
+        except Exception as e:
+            # log error when inserting dataframe into postgres table
+            log.exception(f"[Error inserting dataframe into postgres table: {table_name}...{e}]")
+
+    def update_rows_in_postgres_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+        """
+        Description: update multiples columns in Postgres table from a dataframe on a where in list condition
+
+        sql_update =  example:
+        UPDATE <table_name>
+        SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
+        WHERE <Where_column_name> in < list of corresponding conditional value>;
+        Parameters:
+
+        connection               - Postgres login connection
+        cursor                   - Postgres connection cursor
+        table_name               - table in Postgres to update
+        columns_to_update        - column names in Postgres table to update
+        column_values_to_update  - column values to upload into Postgres table
+        where_column_name        - single field, condition for update
+        where_column_list        - list of accepted values for where condition
+
+        Return:                  - None - update records
+        """
+        # try except block
+        try:
+            # log to console, creating update statement to upload
+            log.info("[Creating Update SQL statement...]")
+            # create beginning of update, add table name
+            sql_update = "UPDATE " + table_name + " SET "
+            # add column names and column values to set in the update
+            for index, col in enumerate(columns_to_update):
+                # make sure to not grab a value outside of range and not the last row
+                if index < len(columns_to_update) - 1:
+                    # for all lines except the last row, add column name, value, and comma
+                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
+                # adding string to sql_update for last row to update
+                if index == len(columns_to_update) - 1:
+                    # for last row, add column name and value without a comma
+                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
+            # add where clause to end of sql string
+            sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
+            # execute the deletion of records
+            cursor.execute(sql_update)
+            # log to console commiting update to table now
+            log.info(f"[Commiting update to MSSQL table: {table_name}...]")
+            # commit the sql statement
+            connection.commit()
+        # exception block - error updating rows in postgres table
+        except Exception as e:
+            # log error when attempting to update rows in postgres table
+            log.exception(f"[Error updating rows in postgres table...{e}]")
+
+    def delete_rows_in_postgres_table(self, connection, cursor, table_name, column_name, record_list):
+        """Description: generate a query string to delete records from a Postgres table
+           Parameters:
+
+           connection               - Postgres login connection
+           cursor                   - Postgres connection cursor
+           table_name               - table in Postgres to update
+           columns_name             - column name in Postgres table with key used to delete
+           record_list              - list of key IDs to delete records
+
+           Return:                  - None - delete records
+        """
+        # try except block
+        try:
+            # Example with parameterization
+            sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
+            # execute the deletion of records
+            cursor.execute(sql_delete)
+            # commit the sql statement
+            connection.commit()
+            # log to console deleting records
+            log.info(f"[Deleting records in table: {table_name}...]")
+        # exception block - error deleting rows in mssql table
+        except Exception as e:
+            # log error when deleting rows in postgres table
+            log.exception(f"[Error deleting rows in postgres table...{e}]")
+
 
 class Custom_Utilities:
     def __init__(self):
