@@ -1150,32 +1150,30 @@ class Postgres_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_mssql(self, host="localhost", database="financial_db", user="postgres", password="postgres", port=5432):
+    def login_to_mssql(self, host = "localhost", database = "financial_db", user = "postgres", password = "postgres", port = 5432):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
 
-        driver                      - SQL Server Driver use {SQL Driver} or {ODBC Driver 17 for SQL Server}
-        server                      - string, IP address of server, I.E. 127.0.0.1
-        database                    - string, Database name
-        Username                    - string, MSSQL server Username
-        Password                    - string, MSSQL server Password
-        use_windows_authentication  - bool, use window authentication instead of a username and password
-        trusted_connection          - string, values = 'yes', 'no'
+        host            - string, default to "localhost"
+        database        - string, default to "financial_db"
+        user            - string, default to "postgres"
+        password        - string, default to "postgres"
+        port            - int, default to 5432
 
-        Return:         - MSSQL cursor
+        Return:         - postgres cursor
         """
         # try except block
         try:
 
             # log to console status of logging into database
-            log.info(f"[Logging into MSSQL DB using windows Auth on DB: {database}]")
+            log.info(f"[Logging into postgres DB using windows Auth on DB: {database}]")
             # establish a connection
-            cursor_connection = psycopg2.connect(host="localhost",
-                                                 database="financial_db",
-                                                 user="postgres",
-                                                 password="postgres",
-                                                 port=5432
+            cursor_connection = psycopg2.connect(host=host,
+                                                 database=database,
+                                                 user=user,
+                                                 password=passwordd,
+                                                 port=port
                                                  )
 
             # convert the instance to a cursor
@@ -1186,8 +1184,8 @@ class Postgres_Utilities:
             return (cursor_connection, cursor)
         # exception block - error
         except Exception as e:
-            # log error when
-            log.exception(f"[Error Logging into MSSQL DB...{e}]")
+            # log error when logging in
+            log.exception(f"[Error Logging into postgres DB...{e}]")
 
     def query_postgres_return_dataframe(self, query, cursor):
         """
@@ -1366,7 +1364,6 @@ class Postgres_Utilities:
         except Exception as e:
             # log error when deleting rows in postgres table
             log.exception(f"[Error deleting rows in postgres table...{e}]")
-
 
 class Custom_Utilities:
     def __init__(self):
