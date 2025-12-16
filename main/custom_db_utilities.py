@@ -123,13 +123,13 @@ class Salesforce_Utilities:
             return_df = df
             # check if formatting a single column
             if type(columns) == str:
-                # reformat the single column
+                # reformat the single column, apply lambda to remove extra values only retaining the mm-dd-yyyy values including the hyphens
                 return_df[columns] = pd.to_datetime(df[columns], format = format).dt.normalize().apply(lambda x : str(x)[:10])
             # formatting list of columns
             elif type(columns) == list:
                 # loop through list of columns to format one by one
                 for column in columns:
-                    # format the column in this loop of the list
+                    # format the column in this loop of the list, apply lambda to remove extra values only retaining the mm-dd-yyyy values including the hyphens
                     return_df[column] = pd.to_datetime(df[column], format = format).dt.normalize().apply(lambda x : str(x)[:10])
                     # replace blanks due to reformat
                     return_df.replace({column : {"NaT" : None, "" : None, " " : None}}, inplace = True)
