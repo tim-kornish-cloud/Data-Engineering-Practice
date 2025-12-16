@@ -1,5 +1,7 @@
 This is a mock project for migrating data setting up database to database integration through python pandas populated with mock data from https://www.mockaroo.com/
 
+Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineering to help track development and get in cadence of creating tickets and branches for specific tickets
+
 # custom_db_utilities.py
   - contains a utilities class for each database listed below to insert/delete/update/query data from multiple data sources all interfacing through pandas dataframes.
 ## Cloud DB
