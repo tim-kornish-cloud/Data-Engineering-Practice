@@ -40,6 +40,7 @@ connection = psycopg2.connect(
       port = port
   )
 
+
 # create cursor to execute queries with
 cursor = connection.cursor()
 
