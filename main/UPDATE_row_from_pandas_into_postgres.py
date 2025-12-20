@@ -54,7 +54,8 @@ WHERE userId = %s
 """
 
 # query the records from the postgres table, load into a DataFrames
-# get userId, then modify Amount column. grab values from dataframe and put in variables amount and userId
+# get userId, then modify Amount column. grab values from dataframe and put in variables amount and user_id
 
 # execute the update against the dataframe values
-cursor.execute(update_record_sql, amount, userId)
+cursor.execute(update_record_sql, amount, user_id)
+connection.commit()
