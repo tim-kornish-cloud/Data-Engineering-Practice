@@ -45,7 +45,7 @@ connection = psycopg2.connect(
 cursor = connection.cursor()
 
 select_record_sql = """
-      SELECT * INTO transactions LIMIT 1;
+      SELECT * INTO accounts_test LIMIT 1;
       """
 
 transaction_df = pd.read_sql(select_record_sql, connection)
