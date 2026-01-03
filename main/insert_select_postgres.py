@@ -71,35 +71,40 @@ insert_record_sql = """
                                AmountPaid)
       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
       """
+mock_df["AmountPaid"] = mock_df["AmountPaid"].astype(float)
+# Convert True/False to 1/0 using replace
+mock_df["IsActive"] = mock_df["IsActive"].replace({True: 1, False: 0})
+
+row_to_insert = 4
 
 # select the values of the first account to insert into the postgres table
-# first_account = (mock_df["AccountNumber"].astype('int').iloc[0],
-#                  mock_df["Name"].iloc[0],
-#                  mock_df["NumberOfEmployees"].astype('int').iloc[0],
-#                  mock_df["NumberofLocations__c"].astype('int').iloc[0],
-#                  mock_df["Phone"].iloc[0],
-#                  mock_df["SLA__c"].iloc[0],
-#                  mock_df["SLASerialNumber__c"].astype('int').iloc[0],
-#                  mock_df["Account_Number_External_ID__c"].iloc[0],
-#                  mock_df["IsActive"].astype('int').iloc[0],
-#                  mock_df["CreatedDate"].iloc[0],
-#                  mock_df["AmountPaid"].astype('float32').iloc[0])
+first_account = (mock_df["AccountNumber"].astype('str').iloc[row_to_insert],
+                 mock_df["Name"].astype('str').iloc[row_to_insert],
+                 int(mock_df["NumberOfEmployees"].iloc[row_to_insert]),
+                 int(mock_df["NumberofLocations__c"].iloc[row_to_insert]),
+                 mock_df["Phone"].astype('str').iloc[row_to_insert],
+                 mock_df["SLA__c"].astype('str').iloc[row_to_insert],
+                 int(mock_df["SLASerialNumber__c"].iloc[row_to_insert]),
+                 mock_df["Account_Number_External_ID__c"].astype('str').iloc[row_to_insert],
+                 mock_df["IsActive"].astype('int').astype('str').iloc[row_to_insert],
+                 mock_df["CreatedDate"].iloc[row_to_insert],
+                 float(mock_df["AmountPaid"].iloc[row_to_insert]))
 
-first_account = (
-    "1",
-    "Berni",
-    19,
-    50,
-    "801-507-7120",
-    "gold",
-    242272447,
-    "7d578aec-9b1d-4cdc-9dc3-f87fd1ced883",
-    '0',
-    "4/9/2025",
-    30.65
-)
+# first_account = (
+#     "1",
+#     "Berni",
+#     19,
+#     50,
+#     "801-507-7120",
+#     "gold",
+#     242272447,
+#     "7d578aec-9b1d-4cdc-9dc3-f87fd1ced883",
+#     '0',
+#     "4/9/2025",
+#     30.65
+# )
 
-print(mock_df.head(1))
+print(mock_df.head(row_to_insert+ 1))
 # upload record to table just created
 cursor.execute(insert_record_sql, first_account)
 
