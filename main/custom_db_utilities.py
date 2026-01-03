@@ -1325,6 +1325,8 @@ class Postgres_Utilities:
                 if index == len(columns_to_update) - 1:
                     # for last row, add column name and value without a comma
                     sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
+            if type(sql_update) == None:
+                raise ValueError(f"sql_update variable not pupulating, value: {sql_update}")
             # add where clause to end of sql string
             sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
             # execute the deletion of records
