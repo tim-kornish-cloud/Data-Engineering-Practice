@@ -33,6 +33,7 @@ import mysql.connector
 from pymongo import MongoClient
 # psycopg2 for connecting postgresql database
 import psycopg2
+from psycopg2.extras import execute_values
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
@@ -1223,7 +1224,7 @@ class Postgres_Utilities:
             # log error when querying postgres table
             log.exception(f"[Error querying postgres table...{e}]")
 
-    def insert_dataframe_into_postgres_table(self, connection, cursor, df, table_name, column_types = [], cols = "", use_all_columns_in_df = True, close_connection = True):
+    def insert_dataframe_into_postgres_table(self, connection, cursor, df, table_name, column_types = [], cols = "", close_connection = True):
         """Description: insert a dataframe into a postgres table, the whole dataframe will be inserted
         Parameters:
 
@@ -1233,7 +1234,6 @@ class Postgres_Utilities:
         table_name              - table name of database to insert records into
         column_types            - set column datatypes before insert, auto datatype setting can sometimes be inaccurate
         cols                    - list of columns, currently experimental
-        use_all_columns_in_df   - boolean to use all columns or not, currently experimental
         close_connection        - boolean, close connection after insert.
 
         return:                 - none - insert records into postgres # DEBUG:
@@ -1245,17 +1245,11 @@ class Postgres_Utilities:
         """
         # try except block
         try:
-            # if the df column list matches the table, use all columns
-            if use_all_columns_in_df:
-                # generate a list of all columns
-                cols = ",".join([k for k in df.dtypes.index])
-            # generate a list of "?" to be replaced by the actual values of the dataframe
-            params = ",".join("?" * len(df.columns))
+            # generate a list of all columns
+            cols = ",".join([k for k in df.dtypes.index])
             # generate the sql commit with the dataframe
-            sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(table_name, cols, params)
+            sql = "INSERT INTO {0} ({1}) VALUES %s".format(table_name, cols)
 
-            # for loop only works when provided a list of column converted types
-            log.info("[Converting data types in DataFrame...]")
             # loop through each column to convert the type every value
             for index, col in enumerate(df.columns):
                 # confirm the index is still within range of acceptable indexes
@@ -1272,12 +1266,14 @@ class Postgres_Utilities:
                     # check if type == boolean
                     if column_types[index] == "bool":
                         df[col] = df[col].astype(bool)
+                    # check if type == date
+                    if column_types[index] == "date":
+                        # do nothing
+                        continue
             # convert the rows in the dataframe into tuples
             data = [tuple(x) for x in df.values]
-            # set the bulk insert for pyodbc cursor.fast_executemany = True
-            cursor.fast_executemany = True
             # execute insert of records
-            cursor.executemany(sql, data)
+            execute_values(cursor, sql, data)
             # commit the sql statement
             connection.commit()
             # close the connection if desired
