@@ -67,16 +67,15 @@ select_query = """SELECT accountnumber,
                          isactive,
                          createddate,
                          amountpaid
-                  FROM accounts_test limit 1"""
+                  FROM accounts_test"""
 
 # accounts in the postgres table shown in the query above
 account_df = pd.read_sql(select_query, connection)
 
-
 #set table to update
 table_to_delete = 'Accounts_test'
 
-# table key field
+# table primary key field
 table_UID = 'account_number_external_id__c'
 
 # below is a sql list as a single string
