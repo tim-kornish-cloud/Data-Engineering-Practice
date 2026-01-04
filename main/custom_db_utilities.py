@@ -1151,7 +1151,7 @@ class Postgres_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_mssql(self, host = "localhost", database = "financial_db", user = "postgres", password = "postgres", port = 5432):
+    def login_to_postgresql(self, host = "localhost", database = "financial_db", user = "postgres", password = "postgres", port = 5432):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
@@ -1173,7 +1173,7 @@ class Postgres_Utilities:
             cursor_connection = psycopg2.connect(host=host,
                                                  database=database,
                                                  user=user,
-                                                 password=passwordd,
+                                                 password=password,
                                                  port=port
                                                  )
 
@@ -1188,35 +1188,23 @@ class Postgres_Utilities:
             # log error when logging in
             log.exception(f"[Error Logging into postgres DB...{e}]")
 
-    def query_postgres_return_dataframe(self, query, cursor):
+    def query_postgres_return_dataframe(self, query, connection):
         """
-        Description: query a Postgres server with a logged in cursor and
+        Description: query a Postgres server with a logged in connection and
         process results into a pandas dataframe the return the dataframe.
         Parameters:
 
         query           - query string
-        cursor          - cursor creating upon login to execute the query
+        connection      - db connection to execute the query with
 
         Return:         - pandas.DataFrame
         """
         # try except block
         try:
             # log to console beginning query against postgres database
-            log.info("[Querying MS SQL DB...]")
+            log.info("[Querying Postgres DB...]")
             # execute query with cursor
-            cursor = cursor.execute(query)
-            # convert the results into a list of columns
-            columns = [column[0] for column in cursor.description]
-            # log to console status of querying records
-            log.info("[Condensing results into Dict...]")
-            # convert the columns and rows of data into a list of dicts
-            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            # log to console status of querying records
-            log.info("[transforming Dict into DataFrame...]")
-            # convert the list of dicts into a pandas dataframe
-            results_df = pd.DataFrame(results)
-            # log to console status of querying records
-            log.info(f"[loaded {str(len(results_df))} records into DataFrame]")
+            results_df = pd.read_sql(query, connection)
             # return the results of the query as a pandas data frame
             return results_df
         # exception block - error querying postgres table
@@ -1240,11 +1228,12 @@ class Postgres_Utilities:
         """
         # try except block
         try:
+            # log error when inserting dataframe into postgres table
+            log.info(f"[preparing datagrame before inserting into postgres table: {table_name}...]")
             # generate a list of all columns
             cols = ",".join([k for k in df.dtypes.index])
             # generate the sql commit with the dataframe
             sql = "INSERT INTO {0} ({1}) VALUES %s".format(table_name, cols)
-
             # loop through each column to convert the type every value
             for index, col in enumerate(df.columns):
                 # confirm the index is still within range of acceptable indexes
@@ -1267,6 +1256,8 @@ class Postgres_Utilities:
                         continue
             # convert the rows in the dataframe into tuples
             data = [tuple(x) for x in df.values]
+            # log error when inserting dataframe into postgres table
+            log.info(f"[inserting dataframe rows into postgres table: {table_name}...]")
             # execute insert of records
             execute_values(cursor, sql, data)
             # commit the sql statement
@@ -1316,14 +1307,16 @@ class Postgres_Utilities:
                 if index == len(columns_to_update) - 1:
                     # for last row, add column name and value without a comma
                     sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
+            # double check if string is properly created
             if type(sql_update) == None:
-                raise ValueError(f"sql_update variable not pupulating, value: {sql_update}")
+                # throw error if not generating
+                raise ValueError(f"sql_update variable not populating, value: {sql_update}")
             # add where clause to end of sql string
             sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
             # execute the deletion of records
             cursor.execute(sql_update)
             # log to console commiting update to table now
-            log.info(f"[Commiting update to MSSQL table: {table_name}...]")
+            log.info(f"[Commiting update to postgres table: {table_name}...]")
             # commit the sql statement
             connection.commit()
         # exception block - error updating rows in postgres table
