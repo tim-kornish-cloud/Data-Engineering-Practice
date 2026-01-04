@@ -1,14 +1,13 @@
 # Author: Timothy Kornish
 # CreatedDate: 9/11/2025
 # Description: set up a postgres connection and populate database with fake data
+# choose how many rows to insert and what row of the csv to start on.
+# NOTE: no index out of bound handling on the csv length
 
 # pandas to load mock data
 import pandas as pd
 # import os for mock data file path specification
 import os
-# psycopg2 for connecting postgresql database
-import psycopg2
-from psycopg2.extras import execute_values
 # import dml functions from utilities class specific to postgresql
 from custom_db_utilities import  Postgres_Utilities
 # retreive stored credentials
@@ -45,31 +44,24 @@ database = Cred.get_database(database, environment)
 # get port from credentials
 port = Cred.get_port()
 
-# set up connection to postgres
-connection = psycopg2.connect(
-      host = host,
-      database = database,
-      user = username,
-      password = password,
-      port = port
-)
-
-# create cursor to execute queries with
-cursor = connection.cursor()
+# set up connection to postgres and create cursor to execute queries with
+connection, cursor  = Postgres_Utils.login_to_postgresql(host, database, username, password, port)
 
 # number of records to attempt
 num_of_records = 10
 
 # starting index to choose records
-record_start = 10
+record_start = 40
 
 # convert binary data from true/false to 1/0
+# will throw warning using .replace(), but don't care for this example
 mock_df["IsActive"] = mock_df["IsActive"].replace({True: 1, False: 0})
 
 # select only 10 records
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
 
-# hardcoding these types instead of the entire dataframe
+# hardcoding the types for proper parsing, attempt at auto detect caused issues
+# can make this into a dictionary of columns as keys, with types as values
 column_types = ('str', 'str', 'int', 'int', 'str', 'str', 'int', 'str', 'str', 'date', 'float')
 
 # postgres table name the dataframe is being inserted into

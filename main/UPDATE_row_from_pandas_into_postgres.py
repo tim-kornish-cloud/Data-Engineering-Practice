@@ -9,9 +9,7 @@
 import pandas as pd
 # import os for mock data file path specification
 import os
-# psycopg2 for connecting postgresql database
-import psycopg2
-#
+# import dml functions from utilities class specific to postgresql
 from custom_db_utilities import  Postgres_Utilities, Custom_Utilities
 # retreive stored credentials
 from credentials import Credentials
@@ -39,23 +37,10 @@ database = Cred.get_database(database, environment)
 # get port from credentials
 port = Cred.get_port()
 
+# set up connection to postgres and create cursor to execute queries with
+connection, cursor  = Postgres_Utils.login_to_postgresql(host, database, username, password, port)
 
-# set up connection to postgres
-connection = psycopg2.connect(
-      host = host,
-      database = database,
-      user = username,
-      password = password,
-      port = port
-  )
-
-
-# create cursor to execute queries with
-cursor = connection.cursor()
-
-# set update syntax for specifically the amount on a users account
-# modify to be more dynamic later once update basic concept passing
-# select accounts to match against the csv to not attempt to insert duplicates
+# select sql for all accounts to update their sla and number of location values
 select_query = """SELECT accountnumber,
                          "name",
                          numberofemployees,
@@ -70,18 +55,17 @@ select_query = """SELECT accountnumber,
                   FROM accounts_test;"""
 
 # accounts in the postgres table shown in the query above
-account_df = pd.read_sql(select_query, connection)
+account_df = Postgres_Utils.query_postgres_return_dataframe(select_query, connection)
 
-print(account_df.head())
 # modify account SLA value to gold
 # modify number of locations to 25
 account_columns_to_update = ['sla__c', 'numberoflocations__c']
 account_values_to_update = ["Gold", "25"]
 
-#set table to update
+# set table to update
 table_to_update = 'accounts_test'
 
-#table key field
+# table key field
 table_UID = 'account_number_external_id__c'
 
 # below is a sql list as a single string

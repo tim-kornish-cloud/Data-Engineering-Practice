@@ -7,9 +7,7 @@
 import pandas as pd
 # import os for mock data file path specification
 import os
-# psycopg2 for connecting postgresql database
-import psycopg2
-#
+# import dml functions from utilities class specific to postgresql
 from custom_db_utilities import  Postgres_Utilities
 # retreive stored credentials
 from credentials import Credentials
@@ -19,7 +17,7 @@ Postgres_Utils = Postgres_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-# setting database flavor to postgres for
+# setting database flavor to postgres
 database = "Postgres"
 # setting environment to localhost
 environment = "localhost"
@@ -35,24 +33,16 @@ database = Cred.get_database(database, environment)
 # get port from credentials
 port = Cred.get_port()
 
+# set up connection to postgres and create cursor to execute queries with
+connection, cursor  = Postgres_Utils.login_to_postgresql(host, database, username, password, port)
 
-# set up connection to postgres
-connection = psycopg2.connect(
-      host = host,
-      database = database,
-      user = username,
-      password = password,
-      port = port
-  )
-
-
-# create cursor to execute queries with
-cursor = connection.cursor()
-
+# basic select SQL to grab all accounts loaded into test table
 select_record_sql = """
-      SELECT * FROM accounts_test LIMIT 1;
+      SELECT * FROM accounts_test;
       """
+# load records from test table into dataframe using query
+# will throw warning for pandas only supports SQLAlchemy
+transaction_df = Postgres_Utils.query_postgres_return_dataframe(select_record_sql, connection)
 
-transaction_df = pd.read_sql(select_record_sql, connection)
-
+# print out the first 5 rows from loading the record into the dataframe
 print(transaction_df.head())
