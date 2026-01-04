@@ -1,17 +1,13 @@
 # Author: Timothy Kornish
 # CreatedDate: 12/19/2025
 # Description: update rows in postgres table from a pandas dataframe.
-# perform a join to identify rows in both system, update the row manually,
-# then send the update to the corresponding table
 
 
 # pandas to load mock data
 import pandas as pd
 # import os for mock data file path specification
 import os
-# psycopg2 for connecting postgresql database
-import psycopg2
-#
+# import dml functions from utilities class specific to postgresql
 from custom_db_utilities import  Postgres_Utilities, Custom_Utilities
 # retreive stored credentials
 from credentials import Credentials
@@ -39,23 +35,10 @@ database = Cred.get_database(database, environment)
 # get port from credentials
 port = Cred.get_port()
 
+# set up connection to postgres and create cursor to execute queries with
+connection, cursor  = Postgres_Utils.login_to_postgresql(host, database, username, password, port)
 
-# set up connection to postgres
-connection = psycopg2.connect(
-      host = host,
-      database = database,
-      user = username,
-      password = password,
-      port = port
-  )
-
-
-# create cursor to execute queries with
-cursor = connection.cursor()
-
-# set update syntax for specifically the amount on a users account
-# modify to be more dynamic later once update basic concept passing
-# select accounts to match against the csv to not attempt to insert duplicates
+# query accounts to select for deletion, delete all accounts on table
 select_query = """SELECT accountnumber,
                          "name",
                          numberofemployees,
@@ -82,5 +65,4 @@ table_UID = 'account_number_external_id__c'
 accounts_to_delete_list = Utils.generate_sql_list_from_df_column(account_df, 'account_number_external_id__c', output = 'string')
 
 # delete records from table in Postgres database
-Postgres_Utils.delete_rows_in_postgres_table(connection, cursor, table_to_delete,
-                                      table_UID, accounts_to_delete_list)
+Postgres_Utils.delete_rows_in_postgres_table(connection, cursor, table_to_delete, table_UID, accounts_to_delete_list)
