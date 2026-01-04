@@ -1237,11 +1237,6 @@ class Postgres_Utilities:
         close_connection        - boolean, close connection after insert.
 
         return:                 - none - insert records into postgres # DEBUG:
-        Current issue 8/11/25:
-        # current method causes warning with chained indexing instead of using .loc or .iloc
-        # error is just making a getattr call twice instead of once and some other things that improve speed but not a breaking issue
-        # will update to .loc/.iloc at a later point, just need a working function for now
-
         """
         # try except block
         try:
