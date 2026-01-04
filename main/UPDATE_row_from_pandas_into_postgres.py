@@ -74,7 +74,7 @@ account_df = pd.read_sql(select_query, connection)
 
 print(account_df.head())
 # modify account SLA value to gold
-# modify number of locations to 5
+# modify number of locations to 25
 account_columns_to_update = ['sla__c', 'numberoflocations__c']
 account_values_to_update = ["Gold", "25"]
 
@@ -86,7 +86,7 @@ table_UID = 'account_number_external_id__c'
 
 # below is a sql list as a single string
 accounts_to_update_list = Utils.generate_sql_list_from_df_column(account_df, 'account_number_external_id__c', output = 'string')
-print(accounts_to_update_list)
+
 # upload the update sql call to Postgres database
 Postgres_Utils.update_rows_in_postgres_table(connection, cursor, table_to_update,
                                       account_columns_to_update, account_values_to_update,
