@@ -1271,7 +1271,7 @@ class Postgres_Utilities:
             # log error when inserting dataframe into postgres table
             log.exception(f"[Error inserting dataframe into postgres table: {table_name}...{e}]")
 
-    def update_rows_in_postgres_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+    def update_rows_in_postgres_table(self, connection, cursor,  df, table_name, columns_to_update, where_column_name, ):
         """
         Description: update multiples columns in Postgres table from a dataframe on a where in list condition
 
@@ -1285,9 +1285,7 @@ class Postgres_Utilities:
         cursor                   - Postgres connection cursor
         table_name               - table in Postgres to update
         columns_to_update        - column names in Postgres table to update
-        column_values_to_update  - column values to upload into Postgres table
         where_column_name        - single field, condition for update
-        where_column_list        - list of accepted values for where condition
 
         Return:                  - None - update records
         """
@@ -1296,25 +1294,31 @@ class Postgres_Utilities:
             # log to console, creating update statement to upload
             log.info("[Creating Update SQL statement...]")
             # create beginning of update, add table name
-            sql_update = "UPDATE " + table_name + " SET "
-            # add column names and column values to set in the update
-            for index, col in enumerate(columns_to_update):
-                # make sure to not grab a value outside of range and not the last row
-                if index < len(columns_to_update) - 1:
-                    # for all lines except the last row, add column name, value, and comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
-                # adding string to sql_update for last row to update
-                if index == len(columns_to_update) - 1:
-                    # for last row, add column name and value without a comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
-            # double check if string is properly created
-            if type(sql_update) == None:
-                # throw error if not generating
-                raise ValueError(f"sql_update variable not populating, value: {sql_update}")
-            # add where clause to end of sql string
-            sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
-            # execute the deletion of records
-            cursor.execute(sql_update)
+            sql_update = f"UPDATE {table_name} SET "
+            # create string of comma delimited columns to add to the sql string
+            col_list = ""
+            # create an array of columns to upload starting with where column,
+            df_col_list = [where_column_name]
+            # add columns to list to trim down the which columns in dataframe sent in update
+            df_col_list.extend(columns_to_update)
+            # loop through columns to add several variables
+            for col in columns_to_update:
+                # assume table and dataframe column names are identical, rename df column names if mismatch
+                sql_update = sql_update + f"{col} = data.{col}, "
+                # add column to list to add into sql post for loop
+                col_list = col_list + col + ", "
+            # remove extra white space and comma from string
+            sql_update = sql_update[:-2]
+            # remove extra white space and comma from string
+            col_list = col_list[:-2]
+            # add variables to string
+            sql_update = sql_update + f" FROM (VALUES %s) AS data ({where_column_name}, {col_list}) WHERE {table_name}.{where_column_name} = data.{where_column_name}"
+            # trim dataframe based on columns
+            df_to_update = df[df_col_list]
+            # convert the rows in the dataframe into tuples
+            data = [tuple(x) for x in df_to_update.values]
+            # execute insert of records
+            execute_values(cursor, sql_update, data)
             # log to console commiting update to table now
             log.info(f"[Commiting update to postgres table: {table_name}...]")
             # commit the sql statement
