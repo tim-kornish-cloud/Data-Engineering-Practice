@@ -1271,18 +1271,21 @@ class Postgres_Utilities:
             # log error when inserting dataframe into postgres table
             log.exception(f"[Error inserting dataframe into postgres table: {table_name}...{e}]")
 
-    def update_rows_in_postgres_table(self, connection, cursor,  df, table_name, columns_to_update, where_column_name, ):
+    def update_rows_in_postgres_table(self, connection, cursor,  df, table_name, columns_to_update, where_column_name):
         """
         Description: update multiples columns in Postgres table from a dataframe on a where in list condition
 
         sql_update =  example:
-        UPDATE <table_name>
-        SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
-        WHERE <Where_column_name> in < list of corresponding conditional value>;
+        execute_values(cur,
+                       UPDATE test SET v1 = data.v1, v2 = data.v2 FROM (VALUES %s) AS data (id, v1, v2)
+                       WHERE test.id = data.id,
+                       [(1, 'a', 20), (4, 'b', 50)])
+
         Parameters:
 
         connection               - Postgres login connection
         cursor                   - Postgres connection cursor
+        df                       - dataframe of records to upload in update call
         table_name               - table in Postgres to update
         columns_to_update        - column names in Postgres table to update
         where_column_name        - single field, condition for update
