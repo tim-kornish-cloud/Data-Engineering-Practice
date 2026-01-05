@@ -1296,29 +1296,29 @@ class Postgres_Utilities:
         try:
             # log to console, creating update statement to upload
             log.info("[Creating Update SQL statement...]")
-            # create beginning of update, add table name
+            # create beginning of update string, add table name
             sql_update = f"UPDATE {table_name} SET "
             # create string of comma delimited columns to add to the sql string
             col_list = ""
             # create an array of columns to upload starting with where column,
             df_col_list = [where_column_name]
-            # add columns to list to trim down the which columns in dataframe sent in update
+            # add columns to list to trim down the which columns in dataframe are sent in update
             df_col_list.extend(columns_to_update)
-            # loop through columns to add several variables
+            # loop through columns to populate several variables
             for col in columns_to_update:
                 # assume table and dataframe column names are identical, rename df column names if mismatch
                 sql_update = sql_update + f"{col} = data.{col}, "
-                # add column to list to add into sql post for loop
+                # add column to list to add into sql string post for loop
                 col_list = col_list + col + ", "
             # remove extra white space and comma from string
             sql_update = sql_update[:-2]
             # remove extra white space and comma from string
             col_list = col_list[:-2]
-            # add variables to string
+            # add variables to sql string
             sql_update = sql_update + f" FROM (VALUES %s) AS data ({where_column_name}, {col_list}) WHERE {table_name}.{where_column_name} = data.{where_column_name}"
-            # trim dataframe based on columns to update
+            # trim dataframe based on columns to include in update
             df_to_update = df[df_col_list]
-            # convert the rows in the dataframe into tuples
+            # convert the rows in the dataframe into a list of tuples
             data = [tuple(x) for x in df_to_update.values]
             # execute insert of records
             execute_values(cursor, sql_update, data)

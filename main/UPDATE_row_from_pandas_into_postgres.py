@@ -75,7 +75,6 @@ for index, row in account_df.iterrows():
         # if first digit in serial number is a 1, set sla value to platinum
         account_df.at[index, 'sla__c'] = "Platinum"
 
-
 #list all columns to be updated in this call
 account_columns_to_update = ['sla__c', 'numberoflocations__c']
 
