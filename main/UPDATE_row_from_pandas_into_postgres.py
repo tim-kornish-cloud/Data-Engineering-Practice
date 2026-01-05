@@ -1,8 +1,6 @@
 # Author: Timothy Kornish
 # CreatedDate: 12/19/2025
 # Description: update rows in postgres table from a pandas dataframe.
-# perform a join to identify rows in both system, update the row manually,
-# then send the update to the corresponding table
 
 
 # pandas to load mock data
@@ -55,10 +53,28 @@ select_query = """SELECT accountnumber,
 # accounts in the postgres table shown in the query above
 account_df = Postgres_Utils.query_postgres_return_dataframe(select_query, connection)
 
-# modify account SLA value to gold
-account_df['sla__c'] = "Gold"
-# modify number of locations to 25
-account_df['numberoflocations__c'] = "15"
+# loop through the dataframe and modify the sla and number of employee fields
+# modify number of locations based on number of employees
+# modify the sla value based on first digit in sla serial number column
+for index, row in account_df.iterrows():
+    # first four ifs modify number of locations based on number of employees
+    # last if modifies sla value
+    if int(row['numberofemployees']) < 10:
+        # if number of employees is below 10, modify number of locations to 1
+        account_df.at[index, 'numberoflocations__c'] = "1"
+    if int(row['numberofemployees']) > 10 and int(row['numberofemployees']) < 50:
+        # if number of employees is between 10 and 50, modify number of locations to 2
+        account_df.at[index, 'numberoflocations__c'] = "2"
+    if int(row['numberofemployees']) > 50 and int(row['numberofemployees']) < 100:
+        # if number of employees is between 50 and 100, modify number of locations to 3
+        account_df.at[index, 'numberoflocations__c'] = "3"
+    if int(row['numberofemployees']) > 100:
+        # if number of employees is greater than 100, modify number of locations to 4
+        account_df.at[index, 'numberoflocations__c'] = "5"
+    if row["slaserialnumber__c"][0:1] == "1":
+        # if first digit in serial number is a 1, set sla value to platinum
+        account_df.at[index, 'sla__c'] = "Platinum"
+
 
 #list all columns to be updated in this call
 account_columns_to_update = ['sla__c', 'numberoflocations__c']
