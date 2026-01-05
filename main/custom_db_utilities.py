@@ -1273,7 +1273,7 @@ class Postgres_Utilities:
 
     def update_rows_in_postgres_table(self, connection, cursor,  df, table_name, columns_to_update, where_column_name):
         """
-        Description: update multiples columns in Postgres table from a dataframe on a where in list condition
+        Description: update multiples columns in Postgres table from a dataframe on where table.id_field = df.id_field
 
         sql_update =  example:
         execute_values(cur,
@@ -1316,7 +1316,7 @@ class Postgres_Utilities:
             col_list = col_list[:-2]
             # add variables to string
             sql_update = sql_update + f" FROM (VALUES %s) AS data ({where_column_name}, {col_list}) WHERE {table_name}.{where_column_name} = data.{where_column_name}"
-            # trim dataframe based on columns
+            # trim dataframe based on columns to update
             df_to_update = df[df_col_list]
             # convert the rows in the dataframe into tuples
             data = [tuple(x) for x in df_to_update.values]
