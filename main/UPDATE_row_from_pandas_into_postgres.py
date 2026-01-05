@@ -16,8 +16,6 @@ from credentials import Credentials
 
 # create and instance of the custom postgres utilities class used to interact with postgres DB/tables
 Postgres_Utils = Postgres_Utilities()
-# create and instance of the custom  utilities class
-Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
