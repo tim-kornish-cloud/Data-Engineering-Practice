@@ -95,16 +95,18 @@ df_to_upload['Account_Number_External_ID__c'] = df_to_upload['Account_Number_Ext
 # perform outer join on 'Account_Number_External_ID__c'
 both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, df_to_upload, left_on = 'Account_Number_External_ID__c', right_on = 'Account_Number_External_ID__c', how = 'outer', suffixes = ('_left', '_right'), indicator = True, validate = None)
 
-print(both_df.columns)
+
+# isolate the only columns needed to make updates to the data in the dataframe before uploading to the table
 both_df = both_df[['Account_Number_External_ID__c', 'NumberOfLocations__c_left', 'NumberOfEmployees_left', "SLASerialNumber__c_left", "SLA__c_left"]]
 
+# rename columns to remove the _left at the end from the join
 both_df.rename(columns = {'Account_Number_External_ID__c_left': 'Account_Number_External_ID__c',
                        'NumberOfLocations__c_left' : 'NumberOfLocations__c',
                        'NumberOfEmployees_left' : 'NumberOfEmployees',
                        "SLASerialNumber__c_left" : "SLASerialNumber__c",
                        "SLA__c_left" : "SLA__c"}, inplace = True)
 
-print(both_df.head())
+#
 for index, row in both_df.iterrows():
     # first four ifs modify number of locations based on number of employees
     # last if modifies sla value
