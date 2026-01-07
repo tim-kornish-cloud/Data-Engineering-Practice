@@ -25,10 +25,10 @@ Cred = Credentials()
 environment = 'localhost'
 
 # number of records to attempted
-num_of_records = 10
+num_of_records = 1000
 
 # starting index to choose records
-record_start = 80
+record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
