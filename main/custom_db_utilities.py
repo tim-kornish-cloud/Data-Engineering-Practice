@@ -634,27 +634,39 @@ class MySQL_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
-    def login_to_mysql(self, driver = "{MySQL ODBC 8.0 Unicode Driver}", server = None, database = "", username = None, password = None, ssl_disabled=True):
+    def login_to_mysql(self, server = None, database = "", username = None, password = None, create_engine = False, driver = "{MySQL ODBC 8.0 Unicode Driver}"):
         """
         Description: login to a MSSQL server and return a cursor object to query with
         Parameters:
 
-        driver          - SQL Server Driver use {SQL Driver} or DRIVER={MySQL ODBC 8.0 Unicode Driver}
         server          - IP address of server, I.E. 127.0.0.1
         database        - Database name
         Username        - string, mysql Username
         Password        - string, mysql Password
+        create_engine   - create an engine or connection
+        driver          - SQL Server Driver use {SQL Driver} or DRIVER={MySQL ODBC 8.0 Unicode Driver}
+
 
         Return:         - MySQL engine
         """
         # try except block
         try:
-            # log to console engine is created
-            log.info("[MySQL engine connected...]")
-            # create engine to connect to MySQL
-            engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
-            # return engine to perform operations with
-            return engine
+            # if using an engine interact directly between dataframe and database
+            if create_engine:
+                # log to console engine is created
+                log.info("[MySQL engine connected...]")
+                # create engine to connect to MySQL
+                engine = create_engine("mysql+pymysql://" + username + ":" + password + "@" + server + "/" + database)
+                # return engine to perform operations with
+                return engine
+            # create a conneciton and cursor to query with
+            else:
+                # create connection to mysql table
+                connection = pymysql.connect(host=server,user=username,password=password,database=database)
+                # establish cursor to execute sql commands
+                cursor = connection.cursor()
+                # return both to perform operations
+                return (connection, cursor)
         # exception block - error logging into mysql
         except Exception as e:
             # log error when logging into mysql
@@ -711,7 +723,7 @@ class MySQL_Utilities:
             # log error when inserting dataframe into mysql table
             log.exception(f"[Error inserting dataframe into mysql table: {table_name}...{e}]")
 
-    def update_rows_in_mysql_table(self, engine,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+    def update_rows_in_mysql_table(self, connection, cursor, df, table_name, columns_to_update, where_column_name):
         """
         Description: update multiples columns in MySQL table from a dataframe on a where in list condition
 
@@ -728,11 +740,12 @@ class MySQL_Utilities:
         Parameters:
 
         engine                   - MySQL engine engine
+        Connection               - MySQL connection
+        cursor                   - MySQL connection cursor instance
+        df                       - dataframe
         table_name               - table in MySQL to update
         columns_to_update        - column names in MySQL table to update
-        column_values_to_update  - column values to upload into MySQL table
         where_column_name        - single field, condition for update
-        where_column_list        - list of accepted values for where condition
 
         Return:                  - None - delete records
         """
@@ -740,33 +753,36 @@ class MySQL_Utilities:
         try:
             # log to console, creating update statement to upload
             log.info("[Creating Update SQL statement...]")
-            # create beginning of update, add table name
-            sql_update = "UPDATE " + table_name + " SET "
-            # add column names and column values to set in the update
-            for index, col in enumerate(columns_to_update):
-                # make sure to not grab a value outside of range and not the last row
-                if index < len(columns_to_update) - 1:
-                    # for all lines except the last row, add column name, value, and comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
-                # adding string to sql_update for last row to update
-                if index == len(columns_to_update) - 1:
-                    # for last row, add column name and value without a comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
-            # add where clause to end of sql string
-            sql_update = sql_update + "WHERE " + where_column_name + " IN " + where_column_list + ";"
-
-            # create connection to execute query from engine
-            with engine.connect() as connection:
-                # set safe mode off before update
-                connection.execute(text("SET SQL_SAFE_UPDATES = 0;"))
-                connection.commit()
-                # execute the update of records
-                connection.execute(text(sql_update))
-                # commit the sql statement
-                connection.commit()
-                # set safe mode back on
-                connection.execute(text("SET SQL_SAFE_UPDATES = 1;"))
-                connection.commit()
+            # create beginning of update string, add table name
+            sql_update = f"UPDATE {table_name} SET "
+            # create string of comma delimited columns to add to the sql string
+            col_list = ""
+            # create an array of columns to upload starting with where column,
+            df_col_list = []
+            # add columns to list to trim down the which columns in dataframe are sent in update
+            df_col_list.extend(columns_to_update)
+            # loop through columns to populate several variables
+            for col in columns_to_update:
+                # assume table and dataframe column names are identical, rename df column names if mismatch
+                sql_update = sql_update + f"{col} = %s, "
+                # add column to list to add into sql string post for loop
+                col_list = col_list + col + ", "
+            # remove extra white space and comma from string
+            sql_update = sql_update[:-2]
+            # remove extra white space and comma from string
+            col_list = col_list[:-2]
+            # add variables to sql string
+            sql_update = sql_update + f" WHERE {where_column_name} = %s"
+            # add where column to list at the end
+            df_col_list.extend([where_column_name])
+            # trim dataframe based on columns to include in update
+            df_to_update = df[df_col_list]
+            # convert the rows in the dataframe into a list of tuples
+            data = [tuple(x) for x in df_to_update.values]
+            # execute insert of records
+            cursor.executemany(sql_update, data)
+            # commit the sql statement
+            connection.commit()
             # log to console commiting update to table now
             log.info(f"[Commiting update to MySQL table: {table_name}...]")
         # exception block - error updating rows in mysql table
