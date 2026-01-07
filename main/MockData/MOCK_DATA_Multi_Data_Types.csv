@@ -1,4 +1,4 @@
-AccountNumber,Name,NumberOfEmployees,NumberofLocations__c,Phone,SLA__c,SLASerialNumber__c,Account_Number_External_ID__c,IsActive,CreatedDate,AmountPaid
+AccountNumber,Name,NumberOfEmployees,NumberOfLocations__c,Phone,SLA__c,SLASerialNumber__c,Account_Number_External_ID__c,IsActive,CreatedDate,AmountPaid
 1,Berni,19,50,801-507-7120,gold,242272447,7d578aec-9b1d-4cdc-9dc3-f87fd1ced883,false,4/9/2025,30.65
 2,Brook,94,21,992-201-2218,gold,101106939,583dec6e-3fa6-4130-98c3-ada69a549c40,true,8/26/2024,20.18
 3,Marielle,50,42,935-636-7107,bronze,101205681,cbaef138-60b5-4560-898f-04de85347cc2,false,6/4/2025,43.17
