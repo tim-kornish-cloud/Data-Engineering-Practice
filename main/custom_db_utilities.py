@@ -707,6 +707,7 @@ class MySQL_Utilities:
 
         return:         - none - insert records into mysql
         """
+        
         # try except block
         try:
             # if the df column list matches the table, use all columns
