@@ -29,7 +29,7 @@ environment = 'localhost'
 num_of_records = 10
 
 # starting index to choose records
-record_start = 80
+record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -80,11 +80,39 @@ mock_data_df['Account_Number_External_ID__c'] = mock_data_df['Account_Number_Ext
 # perform outer join on 'Account_Number_External_ID__c'
 both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, mock_data_df, left_on = 'Account_Number_External_ID__c', right_on = 'Account_Number_External_ID__c', how = 'outer', suffixes = ('_left', '_right'), indicator = True, validate = None)
 
+print(both_df.columns)
+
+#
+both_df = both_df[['Account_Number_External_ID__c', 'NumberOfLocations__c', 'NumberOfEmployees_left', "SLASerialNumber__c_left", "SLA__c_left"]]
+#
+both_df.rename(columns = {'Account_Number_External_ID__c_left': 'Account_Number_External_ID__c',
+                       'NumberOfEmployees_left' : 'NumberOfEmployees',
+                       "SLASerialNumber__c_left" : "SLASerialNumber__c",
+                       "SLA__c_left" : "SLA__c"}, inplace = True)
+
+# loop through the dataframe to make conditional updates
+for index, row in both_df.iterrows():
+    # first four ifs modify number of locations based on number of employees
+    # last if modifies sla value
+    if int(row['NumberOfEmployees']) < 10:
+        # if number of employees is below 10, modify number of locations to 1
+        both_df.at[index, 'NumberOfLocations__c'] = "1"
+    if int(row['NumberOfEmployees']) > 10 and int(row['NumberOfEmployees']) < 50:
+        # if number of employees is between 10 and 50, modify number of locations to 2
+        both_df.at[index, 'NumberOfLocations__c'] = "2"
+    if int(row['NumberOfEmployees']) > 50 and int(row['NumberOfEmployees']) < 100:
+        # if number of employees is between 50 and 100, modify number of locations to 3
+        both_df.at[index, 'NumberOfLocations__c'] = "3"
+    if int(row['NumberOfEmployees']) > 100:
+        # if number of employees is greater than 100, modify number of locations to 4
+        both_df.at[index, 'NumberOfLocations__c'] = "5"
+    if row["SLASerialNumber__c"][0:1] == "1":
+        # if first digit in serial number is a 1, set sla value to platinum
+        both_df.at[index, 'SLA__c'] = "Platinum"
 
 # modify account SLA value to gold
 # modify number of locations to 5
 account_columns_to_update = ['SLA__c', 'NumberOfLocations__c']
-account_values_to_update = ["Gold", "25"]
 
 #set table to update
 table_to_update = '[Data_Engineering].[dbo].[Accounts_test_1]'
@@ -96,32 +124,5 @@ table_UID = 'Account_Number_External_ID__c'
 accounts_to_update_list = Utils.generate_sql_list_from_df_column(both_df, 'Account_Number_External_ID__c', output = 'string')
 
 # upload the update sql call to MSSQL database
-MSSQL_Utils.update_rows_in_mssql_table(connection, cursor, table_to_update,
-                                      account_columns_to_update, account_values_to_update,
-                                      table_UID, accounts_to_update_list)
-
-"""
-keeping here for future example to modify update function
-
-# only keep columns that exist in sql table
-# need to remove extra columns and rename existing columns to match the sql table
-both_df = both_df[['AccountNumber_left', 'Name_left', 'NumberOfEmployees_left',
-                   'NumberOfLocations__c', 'Phone_left', 'SLA__c_left',
-                   'SLASerialNumber__c_left', 'Account_Number_External_ID__c']]
-
-# rename dataframe columns to match the MSSQL table column names
-accounts_to_update_df = both_df.rename(columns = {"AccountNumber_left" : "AccountNumber",
-                          "Name_left" : "Name",
-                          "NumberOfEmployees_left" : "NumberOfEmployees",
-                          "NumberOfLocations__c" : "NumberOfLocations__c",
-                          "Phone_left" : "Phone",
-                          "SLA__c_left" : "SLA__c",
-                          "SLASerialNumber__c_left" : "SLASerialNumber__c",
-                          "Account_Number_External_ID__c" : "Account_Number_External_ID__c"})
-
-# update rows in sql table
-MSSQL_Utils.update_rows_in_MSSQL_table(connection, cursor, accounts_to_update_df,
-                                      table_to_update,
-                                      account_columns_to_update, account_values_to_update,
-                                      table_UID, accounts_to_update_list)
-"""
+MSSQL_Utils.update_rows_in_mssql_table(connection, cursor, both_df, table_to_update,
+                                      account_columns_to_update,table_UID )
