@@ -34,7 +34,7 @@ database = "MySQL"
 num_of_records = 10
 
 # starting index to choose records
-record_start = 90
+record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -46,7 +46,7 @@ success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Insert_" + env + "_" + data
 fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + env + "_" + database + ".csv"
 
 # set input path for mock data csv
-input_csv_file = dir_path + ".\\MockData\\MOCK_DATA.csv"
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Multi_Data_Types.csv"
 
 # read mock data csv from mockaroo.com into a pandas datafrome
 # file contains 1000 records
@@ -96,9 +96,10 @@ df_to_upload['Account_Number_External_ID__c'] = df_to_upload['Account_Number_Ext
 both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, df_to_upload, left_on = 'Account_Number_External_ID__c', right_on = 'Account_Number_External_ID__c', how = 'outer', suffixes = ('_left', '_right'), indicator = True, validate = None)
 
 print(both_df.columns)
-both_df = both_df[['Account_Number_External_ID__c', 'NumberOfEmployees_left', 'NumberOfLocations__c',"SLASerialNumber__c_left", "SLA__c_left"]]
+both_df = both_df[['Account_Number_External_ID__c', 'NumberOfLocations__c_left', 'NumberOfEmployees_left', "SLASerialNumber__c_left", "SLA__c_left"]]
 
 both_df.rename(columns = {'Account_Number_External_ID__c_left': 'Account_Number_External_ID__c',
+                       'NumberOfLocations__c_left' : 'NumberOfLocations__c',
                        'NumberOfEmployees_left' : 'NumberOfEmployees',
                        "SLASerialNumber__c_left" : "SLASerialNumber__c",
                        "SLA__c_left" : "SLA__c"}, inplace = True)

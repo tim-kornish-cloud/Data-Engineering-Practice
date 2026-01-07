@@ -672,7 +672,7 @@ class MySQL_Utilities:
             # log error when logging into mysql
             log.exception(f"[Error logging into mysql...{e}]")
 
-    def query_mysql_return_dataframe(self, query, engine):
+    def query_mysql_return_dataframe(self, query, connection):
         """
         Description: query a MySQL server with a logged in cursor and
         process results into a pandas dataframe the return the dataframe.
@@ -688,7 +688,7 @@ class MySQL_Utilities:
             # log to console beginning query against mssql database
             log.info("[Querying MS SQL DB...]")
             # read query into dataframe
-            df = pd.read_sql(query, engine)
+            df = pd.read_sql(query, con = connection)
             # return the dataframe of results from the MySQL table
             return df
         # exception block - error querying mysql and returning a dataframe
@@ -696,7 +696,7 @@ class MySQL_Utilities:
             # log error when querying mysql and returning a dataframe
             log.exception(f"[Error querying mysql and returning a dataframe...{e}]")
 
-    def insert_dataframe_into_mysql_table(self, engine, df, table_name, index = False, if_exists = "fail"):
+    def insert_dataframe_into_mysql_table(self, connection, cursor, df, table_name, index = False):
         """Description: attempt to insert an entire dataframe into a MySQL table
         Parameters:
 
@@ -704,11 +704,6 @@ class MySQL_Utilities:
         df              - dataframe to insert into the MySQL table
         tablename       - table to insert records into
         index           - attempt to convert the index into a column to use on the insert, default to false
-        if_exists       - {‘fail’, ‘replace’, ‘append’} default to 'append'
-                            How to behave if the table already exists.
-                            fail: Raise a ValueError.
-                            replace: Drop the table before inserting new values.
-                            append: Insert new values to the existing table
 
         return:         - none - insert records into mysql
         """
@@ -716,8 +711,22 @@ class MySQL_Utilities:
         try:
             # if the df column list matches the table, use all columns
             log.info(f"[Uploading Dataframe to MySQL DB Table: {table_name}...]")
-            # upload records directly from dataframe using to_sql function with mysql engine
-            df.to_sql(name = table_name, con = engine, index = index, if_exists = if_exists)
+            # generate a list of all columns
+            cols = ",".join([k for k in df.dtypes.index])
+            # generate a list of %s value place holders
+            values = ",".join(['%s' for _ in df.dtypes.index])
+            # generate the sql commit with the dataframe
+            sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(table_name, cols, values)
+            print(sql)
+            # convert the rows in the dataframe into tuples
+            data = [tuple(x) for x in df.values]
+            print(data)
+            # insert rows into table
+            cursor.executemany(sql, data)
+            # commit to write to table
+            connection.commit()
+            # log error when inserting dataframe into postgres table
+            log.info(f"[inserting dataframe rows into mysql table: {table_name}...]")
         # exception block - error inserting dataframe into mysql table
         except Exception as e:
             # log error when inserting dataframe into mysql table
@@ -790,7 +799,7 @@ class MySQL_Utilities:
             # log error when updating rows in mysql table
             log.exception(f"[Error updating rows in mysql table: {table_name}...{e}]")
 
-    def delete_rows_in_mysql_table(self, engine,  table_name, column_name, record_list):
+    def delete_rows_in_mysql_table(self, connection, cursor,  table_name, column_name, record_list):
         """Description: generate a query string to delete records from a MySQL table
            Parameters:
 
@@ -805,19 +814,11 @@ class MySQL_Utilities:
         try:
             # Example with parameterization
             sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
-
-            # open connection and submit the delete query
-            with engine.connect() as connection:
-                # set safe mode off before update
-                connection.execute(text("SET SQL_SAFE_UPDATES = 0;"))
-                connection.commit()
-                # execute the update of records
-                connection.execute(text(sql_delete))
-                # commit the sql statement
-                connection.commit()
-                # set safe mode back on
-                connection.execute(text("SET SQL_SAFE_UPDATES = 1;"))
-                connection.commit()
+            print(sql_delete)
+            # execute the sql to delete records on the table
+            cursor.execute(sql_delete)
+            # commit the action deleting records off the table
+            connection.commit()
             # log to console commiting update to table now
             log.info(f"[Commiting delete to MySQL table: {table_name}...]")
         # exception block - error deleting rows in mysql table
