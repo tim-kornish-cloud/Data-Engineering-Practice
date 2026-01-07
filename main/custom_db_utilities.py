@@ -552,6 +552,12 @@ class MSSQL_Utilities:
         UPDATE <table_name>
         SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
         WHERE <Where_column_name> in < list of corresponding conditional value>;
+
+
+        UPDATE users
+        SET email = %s, status = %s
+        WHERE user_id = %s
+
         Parameters:
 
         connection               - MSSQL login connection
@@ -713,6 +719,12 @@ class MySQL_Utilities:
         UPDATE <table_name>
         SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
         WHERE <Where_column_name> in < list of corresponding conditional value>;
+
+
+            UPDATE users
+            SET email = %s, status = %s
+            WHERE user_id = %s
+
         Parameters:
 
         engine                   - MySQL engine engine
@@ -1536,7 +1548,7 @@ class Custom_Utilities:
 
     def write_df_to_excel(self, dfs, file_name, sheet_names):
         """
-        Description: Create a single excel file with multiple tabs
+        Description: Create a single excel file with multiple tabs, one tab for each dataframe
         Parameters:
 
         dfs         - list(df), list of dfs, order matters
@@ -1603,6 +1615,7 @@ class Custom_Utilities:
         base_value              - starting value of the sequence
         increment_value         - incrementing value of the sequence
         sort                    - sort by group fields first then the changing field, changing_field must be declared
+        incremental_log         - set how frequent the logger outputs progress
 
         Return: df              - DataFrame with an added column with value changing sequence
         """
@@ -1721,7 +1734,7 @@ class Custom_Utilities:
 
     def now(self, ts_format="%Y-%m-%d__%H-%M-%S"):
         """
-        Description: generate a string list of values from a dataframe column to inject into a query
+        Description: return the current time down to the second, generally for creating timestamps of actions
         Parameters:
 
         ts_format - default to "%Y-%m-%d__%H-%M-%S" - this is the default of salesforce
