@@ -478,7 +478,7 @@ class MSSQL_Utilities:
             # log error when querying mssql table
             log.exception(f"[Error querying mssql table...{e}]")
 
-    def insert_dataframe_into_mssql_table(self, connection, cursor, df, table_name, column_types = [], cols = "", use_all_columns_in_df = True, close_connection = True):
+    def insert_dataframe_into_mssql_table(self, connection, cursor, df, table_name, column_types = [], cols = "", use_all_columns_in_df = True):
         """Description: insert a dataframe into a mssql table, the whole dataframe will be inserted
         Parameters:
 
@@ -489,7 +489,6 @@ class MSSQL_Utilities:
         column_types            - set column datatypes before insert, auto datatype setting can sometimes be inaccurate
         cols                    - list of columns, currently experimental
         use_all_columns_in_df   - boolean to use all columns or not, currently experimental
-        close_connection        - boolean, close connection after insert.
 
         return:                 - none - insert records into mssql # DEBUG:
         Current issue 8/11/25:
@@ -536,15 +535,12 @@ class MSSQL_Utilities:
             # commit the sql statement
             connection.commit()
             # close the connection if desired
-            if close_connection:
-                # close the connection
-                connection.close()
         # exception block - error inserting dataframe into mssql table
         except Exception as e:
             # log error when inserting dataframe into mssql table
             log.exception(f"[Error inserting dataframe into mssql table: {table_name}...{e}]")
 
-    def update_rows_in_mssql_table(self, connection, cursor,  table_name, columns_to_update, column_values_to_update, where_column_name, where_column_list):
+    def update_rows_in_mssql_table(self, connection, cursor, df, table_name, columns_to_update, where_column_name):
         """
         Description: update multiples columns in MSSQL table from a dataframe on a where in list condition
 
@@ -563,10 +559,9 @@ class MSSQL_Utilities:
         connection               - MSSQL login connection
         cursor                   - MSSQL connection cursor
         table_name               - table in MSSQL to update
+        df                       - dataframe
         columns_to_update        - column names in MSSQL table to update
-        column_values_to_update  - column values to upload into MSSQL table
         where_column_name        - single field, condition for update
-        where_column_list        - list of accepted values for where condition
 
         Return:                  - None - update records
         """
@@ -575,23 +570,34 @@ class MSSQL_Utilities:
             # log to console, creating update statement to upload
             log.info("[Creating Update SQL statement...]")
             # create beginning of update, add table name
-            sql_update = "UPDATE " + table_name + " SET "
-            # add column names and column values to set in the update
-            for index, col in enumerate(columns_to_update):
-                # make sure to not grab a value outside of range and not the last row
-                if index < len(columns_to_update) - 1:
-                    # for all lines except the last row, add column name, value, and comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "', "
-                # adding string to sql_update for last row to update
-                if index == len(columns_to_update) - 1:
-                    # for last row, add column name and value without a comma
-                    sql_update = sql_update + col + " = '" + column_values_to_update[index] + "' "
-            # add where clause to end of sql string
-            sql_update = sql_update + " WHERE " + where_column_name + " IN " + where_column_list + ";"
-            # execute the deletion of records
-            cursor.execute(sql_update)
-            # log to console commiting update to table now
-            log.info(f"[Commiting update to MSSQL table: {table_name}...]")
+            # create beginning of update string, add table name
+            sql_update = f"UPDATE {table_name} SET "
+            # create string of comma delimited columns to add to the sql string
+            col_list = ""
+            # create an array of columns to upload starting with where column,
+            df_col_list = []
+            # add columns to list to trim down the which columns in dataframe are sent in update
+            df_col_list.extend(columns_to_update)
+            # loop through columns to populate several variables
+            for col in columns_to_update:
+                # assume table and dataframe column names are identical, rename df column names if mismatch
+                sql_update = sql_update + f"{col} = ?, "
+                # add column to list to add into sql string post for loop
+                col_list = col_list + col + ", "
+            # remove extra white space and comma from string
+            sql_update = sql_update[:-2]
+            # remove extra white space and comma from string
+            col_list = col_list[:-2]
+            # add variables to sql string
+            sql_update = sql_update + f" WHERE {where_column_name} = ?"
+            # add where column to list at the end
+            df_col_list.extend([where_column_name])
+            # trim dataframe based on columns to include in update
+            df_to_update = df[df_col_list]
+            # convert the rows in the dataframe into a list of tuples
+            data = [tuple(x) for x in df_to_update.values]
+            # execute insert of records
+            cursor.executemany(sql_update, data)
             # commit the sql statement
             connection.commit()
         # exception block - error updating rows in mssql table
@@ -707,7 +713,7 @@ class MySQL_Utilities:
 
         return:         - none - insert records into mysql
         """
-        
+
         # try except block
         try:
             # if the df column list matches the table, use all columns
