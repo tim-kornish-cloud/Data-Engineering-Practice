@@ -11,6 +11,7 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
     - MSSQL
     - MySQL
     - MongoDB
+    - Postgres
   - Also contains an additional class with useful functions for adding data and outputting to different formats.
 
 ## Terraform
@@ -80,7 +81,7 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 3) delete_csv_from_s3_into_pandas.py
 
 ## MongoDB
-
+### One script to:
 - insert records from pandas dataframe into MongoDB database collection
 - query records in MongoDB database collection and load into pandas dataframe
 - update query records in MongoDB database collection from pandas dataframe
@@ -90,6 +91,16 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 2) load_records_into_pandas_from_mongodb.py
 3) update_records_from_pandas_in_mongodb.py
 4) delete_records_from_pandas_in_mongodb.py
+
+## PostgreSQL
+### One script to:
+- insert records csv rows from pandas dataframe into PostgreSQL table
+- update and query records in PostgreSQL table from pandas dataframe
+- delete query records in PostgreSQL table from pandas dataframe
+
+1) insert_select_postgres.py
+2) UPDATE_row_from_pandas_into_postgres.py
+3) DELETE_row_from_postgres.py
 
 ---
 # Unit Testing
