@@ -1,4 +1,4 @@
-# Author: Timothy Kornish
+s# Author: Timothy Kornish
 # CreatedDate: 9/11/2025
 # Description: set up a postgres connection and populate database with fake data
 # choose how many rows to insert and what row of the csv to start on.

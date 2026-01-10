@@ -66,9 +66,9 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 - update records from a pandas dataframe in a MySQL table
 - delete records in a MySQL table from a pandas dataframe
 
-1) INSERT_mock_data_with_pandas_into_MySQL.py
-2) UPDATE_mock_data_with_pandas_into_MySQL.py
-3) DELETE_mock_data_with_pandas_into_MySQL.py
+1) mysql_insert_example.py
+2) mysql_update_example.py
+3) mysql_delete_example.py
 
 ## AWS S3
 ### One script to:
@@ -76,9 +76,9 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 - download a csv from an S3 bucket into a pandas dataframe
 - delete a csv in an s3 bucket by filename
 
-1) load_csv_into_pandas_into_s3.py
-2) download_csv_into_pandas_from_s3.py
-3) delete_csv_from_s3_into_pandas.py
+1) aws_s3_upload_example.py
+2) aws_s3_download_example.py
+3) aws_s3_delete_example.py
 
 ## MongoDB
 ### One script to:
@@ -87,20 +87,24 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 - update query records in MongoDB database collection from pandas dataframe
 - delete query records in MongoDB database collection from pandas dataframe
 
-1) insert_records_from_pandas_into_mongodb.py
-2) load_records_into_pandas_from_mongodb.py
-3) update_records_from_pandas_in_mongodb.py
-4) delete_records_from_pandas_in_mongodb.py
+1) mongodb_insert_example.py
+2) mongodb_select_example.py
+3) mongodb_update_example.py
+4) mongodb_delete_example.py
 
 ## PostgreSQL
 ### One script to:
 - insert records csv rows from pandas dataframe into PostgreSQL table
+- query records in PostgreSQL table and load into pandas dataframe
 - update and query records in PostgreSQL table from pandas dataframe
 - delete query records in PostgreSQL table from pandas dataframe
+- execute a query to create a table within the database
 
-1) insert_select_postgres.py
-2) UPDATE_row_from_pandas_into_postgres.py
-3) DELETE_row_from_postgres.py
+1) postgres_insert_example.py
+2) postgres_select_example.py
+3) postgres_update_example.py
+4) postgres_delete_example.py
+5) postgres_create_table_example.py
 
 ---
 # Unit Testing
