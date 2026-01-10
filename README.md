@@ -55,10 +55,10 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 - update query records in MSSQL table from pandas dataframe
 - delete query records in MSSQL table from pandas dataframe
 
-1) INSERT_mock_data_with_pandas_into_MSSQL.py
-2) SELECT_query_mock_data_from_MSSQL_into_df.py
-3) UPDATE_query_mock_data_from_MSSQL_into_df.py
-4) DELETE_query_csv_mock_data_from_MSSQL.py
+1) mssql_insert_example.py
+2) mssql_select_example.py
+3) mssql_update_example.py
+4) mssql_delete_example.py
 
 ## MySQL
 ### One script to:
