@@ -43,10 +43,10 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 - upsert records from pandas dataframe into salesforce
 - delete records in salesforce from pandas dataframe
 
-1) insert_mock_data_with_pandas_into_sf.py
-2) update_mock_data_with_pandas_into_sf.py
-3) upsert_mock_data_with_pandas_into_sf.py
-4) delete_mock_data_with_pandas_into_sf.py
+1) salesforce_insert_example.py
+2) salesforce_update_example.py
+3) salesforce_upsert_example.py
+4) salesforce_delete_example.py
 
 ## MSSQL
 ### One script to perform:
