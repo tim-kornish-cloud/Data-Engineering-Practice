@@ -1,10 +1,11 @@
 """
 Author: Timothy Kornish
 CreatedDate: August - 10 - 2025
-Description: A backend utility file for logging into Salesforce,
-             querying results with added pre-processing, post-processing,
-             and logging to the console for time recording
-             of execution start and end results.
+Description: A backend utility file for logging into Salesforce, MySQL, MSSQL, S3, MongoDB, PostgreSQL DBMS's
+             performing insert/update/delete and querying results with added pre-processing, post-processing,
+             and logging to the console for time recording of execution start and end results.
+
+             At the end also includes a custom_utilities class for useful functions non-DBMS specific.
 
 """
 # util libraries
