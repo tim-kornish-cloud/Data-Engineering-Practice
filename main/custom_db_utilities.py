@@ -35,6 +35,10 @@ from pymongo import MongoClient
 # psycopg2 for connecting postgresql database
 import psycopg2
 from psycopg2.extras import execute_values
+# snowflake connection
+import snowflake.connector
+from snowflake.connector.pandas_tools import write_pandas # Used for writing back to Snowflake
+
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
@@ -643,7 +647,7 @@ class MySQL_Utilities:
 
     def login_to_mysql(self, server = None, database = "", username = None, password = None, create_engine = False, driver = "{MySQL ODBC 8.0 Unicode Driver}"):
         """
-        Description: login to a MSSQL server and return a cursor object to query with
+        Description: login to a MySQL server and return a cursor object to query with
         Parameters:
 
         server          - IP address of server, I.E. 127.0.0.1
@@ -693,7 +697,7 @@ class MySQL_Utilities:
         # try except block
         try:
             # log to console beginning query against mssql database
-            log.info("[Querying MS SQL DB...]")
+            log.info("[Querying MySQL DB...]")
             # read query into dataframe
             df = pd.read_sql(query, con = connection)
             # return the dataframe of results from the MySQL table
@@ -1190,7 +1194,7 @@ class Postgres_Utilities:
 
     def login_to_postgresql(self, host = "localhost", database = "financial_db", user = "postgres", password = "postgres", port = 5432):
         """
-        Description: login to a MSSQL server and return a cursor object to query with
+        Description: login to a postgres server and return a cursor object to query with
         Parameters:
 
         host            - string, default to "localhost"
@@ -1205,7 +1209,7 @@ class Postgres_Utilities:
         try:
 
             # log to console status of logging into database
-            log.info(f"[Logging into postgres DB using windows Auth on DB: {database}]")
+            log.info(f"[Logging into postgres DB: {database}]")
             # establish a connection
             cursor_connection = psycopg2.connect(host=host,
                                                  database=database,
@@ -1394,6 +1398,77 @@ class Postgres_Utilities:
         except Exception as e:
             # log error when deleting rows in postgres table
             log.exception(f"[Error deleting rows in postgres table...{e}]")
+
+class Snowflake_Utilities:
+    def __init__(self):
+        """Constructor Parameters:
+           - currently no customization used.
+
+           can add login credentials as instance variables to utilize in functions
+        """
+
+    def login_to_snowflake(self, user='your_user', password='your_password', account='your_account', warehouse='your_warehouse', database='your_database', schema='your_schema'):
+        """
+        Description: login to a Snowflake server and return a cursor object to query with
+        Parameters:
+
+        user='your_user',
+        password='your_password',
+        account='your_account',
+        warehouse='your_warehouse',
+        database='your_database',
+        schema='your_schema'
+
+        Return:         - Snowflake cursor
+        """
+        # try except block
+        try:
+            # log to console status of logging into database
+            log.info(f"[Logging into Snowflake DB: {database}]")
+            # establish a connection
+            cursor_connection = snowflake.connector.connect(
+                                    user='your_user',
+                                    password='your_password',
+                                    account='your_account', # e.g., 'youraccount.us-east-1'
+                                    warehouse='your_warehouse',
+                                    database='your_database',
+                                    schema='your_schema'
+                                )
+
+            # convert the instance to a cursor
+            cursor = cursor_connection.cursor()
+            # log to console the cursor is created
+            log.info("[Creating Cursor]")
+            # return the connection and cursor to use to query against the database
+            return (cursor_connection, cursor)
+        # exception block - error
+        except Exception as e:
+            # log error when logging in
+            log.exception(f"[Error Logging into Snowflake DB...{e}]")
+
+    def query_snowflake_return_dataframe(self, query, connection, cursor):
+        """
+        Description: query a snwoflake server with a logged in connection and
+        process results into a pandas dataframe the return the dataframe.
+        Parameters:
+
+        query           - query string
+        connection      - db connection to execute the query with
+
+        Return:         - pandas.DataFrame
+        """
+        # try except block
+        try:
+            # log to console beginning query against snowflake database
+            log.info("[Querying snwoflake DB...]")
+            # execute query with cursor
+            results_df = pd.read_sql(query, connection)
+            # return the results of the query as a pandas data frame
+            return results_df
+        # exception block - error querying snowflake table
+        except Exception as e:
+            # log error when querying snowflake table
+            log.exception(f"[Error querying snowflake table...{e}]")
 
 class Custom_Utilities:
     def __init__(self):
