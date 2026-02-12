@@ -18,31 +18,32 @@ Snowflake_Utils = Snowflake_Utilities()
 Cred = Credentials()
 
 # setting database flavor to snowflake
-database = "Snowflake"
+db = "Snowflake"
 # setting environment to localhost
-environment = "localhost"
+environment = "account_test"
 
 # get username from credentials
-username = Cred.get_username(database, environment)
+username = Cred.get_username(db, environment)
 # get password from credentials
-password = Cred.get_password(database, environment)
-# get host from credentials
-host = Cred.get_host(database, environment)
-# get database from credentials
-database = Cred.get_database(database, environment)
-# get port from credentials
-port = Cred.get_port()
+password = Cred.get_password(db, environment)
+# get account from credentials
+account = Cred.get_account(db, environment)
+# get db from credentials
+database = Cred.get_database(db, environment)
+# get warehouse from credentials
+warehouse = Cred.get_warehouse(db, environment)
+# get schema from credentials
+schema = Cred.get_schema(db, environment)
 
 # set up connection to snowflake and create cursor to execute queries with
-connection, cursor  = Snowflake_Utils.login_to_snowflake(username, password, host, warehouse, database, schema)
+connection, cursor  = Snowflake_Utils.login_to_snowflake(username, password, account, warehouse, database, schema)
 
 # basic select SQL to grab all accounts loaded into test table
 select_record_sql = """
       SELECT * FROM accounts_test;
       """
 # load records from test table into dataframe using query
-# will throw warning for pandas only supports SQLAlchemy
-transaction_df = Snowflake_Utils.query_snowflake_return_dataframe(select_record_sql, connection)
+transaction_df = Snowflake_Utils.query_snowflake_return_dataframe(select_record_sql, connection, cursor)
 
 # print out the first 5 rows from loading the record into the dataframe
 print(transaction_df.head())
