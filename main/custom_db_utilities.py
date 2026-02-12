@@ -1997,4 +1997,4 @@ class Custom_Utilities:
         # exception block - error returning a datetime string of now
         except Exception as e:
             # log error when returning a datetime string of now
-            log.exception(f"[Error returning a datetime string of now...{e}]")
+            log.exception(f"[Error logging message...{e}]")
