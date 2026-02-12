@@ -107,6 +107,18 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 4) postgres_delete_example.py
 5) postgres_create_table_example.py
 
+## Snowflake
+### One script to:
+- insert records csv rows from pandas dataframe into Snowflake table
+- query records in Snowflake table and load into pandas dataframe
+- update and query records in Snowflake table from pandas dataframe
+- delete query records in Snowflake table from pandas dataframe
+
+1) snowflake_insert_example.py
+2) snowflake_select_example.py
+3) snowflake_update_example.py
+4) snowflake_delete_example.py
+
 ---
 # Unit Testing
 
