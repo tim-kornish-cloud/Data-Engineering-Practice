@@ -37,8 +37,6 @@ import psycopg2
 from psycopg2.extras import execute_values
 # snowflake connection
 import snowflake.connector
-from snowflake.connector.pandas_tools import write_pandas # Used for writing back to Snowflake
-
 
 # initialize the console logging to aid in time estimate of execution scripts
 coloredlogs.install()
