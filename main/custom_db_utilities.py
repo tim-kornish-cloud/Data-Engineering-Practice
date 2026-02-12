@@ -1427,12 +1427,12 @@ class Snowflake_Utilities:
             log.info(f"[Logging into Snowflake DB: {database}]")
             # establish a connection
             cursor_connection = snowflake.connector.connect(
-                                    user='your_user',
-                                    password='your_password',
-                                    account='your_account', # e.g., 'youraccount.us-east-1'
-                                    warehouse='your_warehouse',
-                                    database='your_database',
-                                    schema='your_schema'
+                                    user=user,
+                                    password=password,
+                                    account=account, # e.g., 'youraccount.us-east-1'
+                                    warehouse=warehouse,
+                                    database=database,
+                                    schema=schema
                                 )
 
             # convert the instance to a cursor
