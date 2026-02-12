@@ -1603,7 +1603,6 @@ class Snowflake_Utilities:
             # log error when deleting rows in snowflake table
             log.exception(f"[Error deleting rows in snowflake table: {table_name}...{e}]")
 
-
 class Custom_Utilities:
     def __init__(self):
         """Constructor Parameters:
@@ -1979,6 +1978,22 @@ class Custom_Utilities:
         try:
             # return datetime of right now
             return datetime.fromtimestamp(time.time()).strftime(ts_format)
+        # exception block - error returning a datetime string of now
+        except Exception as e:
+            # log error when returning a datetime string of now
+            log.exception(f"[Error returning a datetime string of now...{e}]")
+
+    def log_message_to_console(self, message="%Y-%m-%d__%H-%M-%S"):
+        """
+        Description: log any text message to console, use for start and end timer of scripts
+        Parameters:
+
+        message     - string
+        """
+        # try except block
+        try:
+            # log message to console
+            log.info(f"[{message}]")
         # exception block - error returning a datetime string of now
         except Exception as e:
             # log error when returning a datetime string of now

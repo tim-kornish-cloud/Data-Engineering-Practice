@@ -8,14 +8,19 @@ import pandas as pd
 # import os for mock data file path specification
 import os
 # import dml functions from utilities class specific to snowflake
-from custom_db_utilities import  Snowflake_Utilities
+from custom_db_utilities import  Snowflake_Utilities, Custom_Utilities
 # retreive stored credentials
 from credentials import Credentials
 
 # create and instance of the custom snowflake utilities class used to interact with snowflake DB/tables
 Snowflake_Utils = Snowflake_Utilities()
+# import Utils class for start and end time tracking
+Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
+
+# log message to console this is the script start time
+Utils.log_message_to_console("------Start Timer here------")
 
 # setting database flavor to snowflake
 db = "Snowflake"
@@ -23,10 +28,10 @@ db = "Snowflake"
 environment = "account_test"
 
 # number of records to attempted
-num_of_records = 10
+num_of_records = 40
 
 # starting index to choose records
-record_start = 30
+record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -70,3 +75,6 @@ connection, cursor  = Snowflake_Utils.login_to_snowflake(username, password, acc
 
 # load records from test table into dataframe using query
 Snowflake_Utils.insert_dataframe_into_snowflake_table(connection, cursor, df_to_upload, 'accounts_test')
+
+# log message to console this is the script end time
+Utils.log_message_to_console("------End Timer here------")
