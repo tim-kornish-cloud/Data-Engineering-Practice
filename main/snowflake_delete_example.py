@@ -1,6 +1,6 @@
 # Author: Timothy Kornish
-# CreatedDate: 12/17/2025
-# Description: set up a snowflake connection and basic select query funneling records into a pandas dataframe
+# CreatedDate: 02/11/2026
+# Description: set up a snowflake connection and purge all records on accounts_test table that exist in the mock csv file.
 
 
 # pandas to load mock data
@@ -75,9 +75,6 @@ accounts_query = "SELECT * FROM accounts_test"
 
 # query the records inserted
 account_df = Snowflake_Utils.query_snowflake_return_dataframe(accounts_query, connection, cursor)
-
-print(account_df.head())
-print(account_df.columns)
 
 # format the merge column to remove any whitespace
 account_df.columns = account_df.columns.str.strip()

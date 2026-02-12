@@ -1,5 +1,5 @@
 # Author: Timothy Kornish
-# CreatedDate: 12/17/2025
+# CreatedDate: 02/11/2026
 # Description: set up a snowflake connection and basic select query funneling records into a pandas dataframe
 
 

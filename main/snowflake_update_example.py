@@ -1,6 +1,6 @@
 # Author: Timothy Kornish
-# CreatedDate: 12/17/2025
-# Description: set up a snowflake connection and basic select query funneling records into a pandas dataframe
+# CreatedDate: 02/11/2026
+# Description: set up a snowflake connection and update a few rows in the accounts test table
 
 
 # pandas to load mock data
@@ -76,9 +76,6 @@ accounts_query = "SELECT * FROM accounts_test"
 # query the records inserted
 account_df = Snowflake_Utils.query_snowflake_return_dataframe(accounts_query, connection, cursor)
 
-print(account_df.head())
-print(account_df.columns)
-
 # format the merge column to remove any whitespace
 account_df.columns = account_df.columns.str.strip()
 df_to_upload.columns = df_to_upload.columns.str.strip()
@@ -94,14 +91,7 @@ both_df, left_only_df, right_only_df = Utils.get_df_diffs(account_df, df_to_uplo
 # isolate the only columns needed to make updates to the data in the dataframe before uploading to the table
 both_df = both_df[['Account_Number_External_ID__c', 'NumberOfLocations__c', 'NumberOfEmployees', "SLASerialNumber__c", "SLA__c"]]
 
-# rename columns to remove the _left at the end from the join
-# both_df.rename(columns = {'Account_Number_External_ID__c_left': 'Account_Number_External_ID__c',
-#                        'NumberOfLocations__c_left' : 'NumberOfLocations__c',
-#                        'NumberOfEmployees_left' : 'NumberOfEmployees',
-#                        "SLASerialNumber__c_left" : "SLASerialNumber__c",
-#                        "SLA__c_left" : "SLA__c"}, inplace = True)
-
-#
+# loop through each row to updddadte the number of employees and sla serial number columns
 for index, row in both_df.iterrows():
     # first four ifs modify number of locations based on number of employees
     # last if modifies sla value
@@ -130,8 +120,6 @@ table_name = 'accounts_test'
 #table key field
 where_column_name = 'Account_Number_External_ID__c'
 
-print(both_df.head(40))
-
-# # upload the update call of records to mysql
+# upload the update call of records to mysql
 Snowflake_Utils.update_rows_in_snowflake_table(connection, cursor, both_df, table_name,
                                       columns_to_update, where_column_name)

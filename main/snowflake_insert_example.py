@@ -1,6 +1,6 @@
 # Author: Timothy Kornish
-# CreatedDate: 12/17/2025
-# Description: set up a snowflake connection and basic select query funneling records into a pandas dataframe
+# CreatedDate: 02/11/2026
+# Description: set up a snowflake connection and insert a few rows into accounts_test table from a csv
 
 
 # pandas to load mock data
