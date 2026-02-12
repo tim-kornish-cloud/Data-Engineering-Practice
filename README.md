@@ -7,6 +7,7 @@ Adding trello board and cards here: https://trello.com/b/AMlwA5Xg/data-engineeri
 ## Cloud DB
     - Salesforce
     - AWS S3
+    - Snowflake
 ## Local DB
     - MSSQL
     - MySQL
