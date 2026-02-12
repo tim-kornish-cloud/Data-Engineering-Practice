@@ -1454,6 +1454,7 @@ class Snowflake_Utilities:
 
         query           - query string
         connection      - db connection to execute the query with
+        cursor          - cursor to perform executemany()
 
         Return:         - pandas.DataFrame
         """
@@ -1469,6 +1470,139 @@ class Snowflake_Utilities:
         except Exception as e:
             # log error when querying snowflake table
             log.exception(f"[Error querying snowflake table...{e}]")
+
+    def insert_dataframe_into_snowflake_table(self, connection, cursor, df, table_name, index = False):
+        """Description: attempt to insert an entire dataframe into a Snowflake table
+        Parameters:
+
+        connection      - db connection to execute the query with
+        cursor          - cursor to perform executemany()
+        df              - dataframe to insert into the Snowflake table
+        tablename       - table to insert records into
+        index           - attempt to convert the index into a column to use on the insert, default to false
+
+        return:         - none - insert records into snowflake
+        """
+
+        # try except block
+        try:
+            # if the df column list matches the table, use all columns
+            log.info(f"[Uploading Dataframe to Snowflake DB Table: {table_name}...]")
+            # generate a list of all columns
+            cols = ",".join([k for k in df.dtypes.index])
+            # generate a list of %s value place holders
+            values = ",".join(['%s' for _ in df.dtypes.index])
+            # generate the sql commit with the dataframe
+            sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(table_name, cols, values)
+            print(sql)
+            # convert the rows in the dataframe into tuples
+            data = [tuple(x) for x in df.values]
+            print(data)
+            # insert rows into table
+            cursor.executemany(sql, data)
+            # commit to write to table
+            connection.commit()
+            # log error when inserting dataframe into postgres table
+            log.info(f"[inserting dataframe rows into snowflake table: {table_name}...]")
+        # exception block - error inserting dataframe into snowflake table
+        except Exception as e:
+            # log error when inserting dataframe into snowflake table
+            log.exception(f"[Error inserting dataframe into snowflake table: {table_name}...{e}]")
+
+    def update_rows_in_snowflake_table(self, connection, cursor, df, table_name, columns_to_update, where_column_name):
+        """
+        Description: update multiples columns in Snowflake table from a dataframe on a where in list condition
+
+        sql_update =  example:
+        UPDATE <table_name>
+        SET <column1_name> = <value, corresponding column1 value>, <column2_name> = <value, corresponding column2 value>,
+        WHERE <Where_column_name> in < list of corresponding conditional value>;
+
+
+            UPDATE users
+            SET email = %s, status = %s
+            WHERE user_id = %s
+
+        Parameters:
+
+        engine                   - snowflake engine engine
+        Connection               - snowflake connection
+        cursor                   - snowflake connection cursor instance
+        df                       - dataframe
+        table_name               - table in snowflake to update
+        columns_to_update        - column names in snowflake table to update
+        where_column_name        - single field, condition for update
+
+        Return:                  - None - delete records
+        """
+        # try except block
+        try:
+            # log to console, creating update statement to upload
+            log.info("[Creating Update SQL statement...]")
+            # create beginning of update string, add table name
+            sql_update = f"UPDATE {table_name} SET "
+            # create string of comma delimited columns to add to the sql string
+            col_list = ""
+            # create an array of columns to upload starting with where column,
+            df_col_list = []
+            # add columns to list to trim down the which columns in dataframe are sent in update
+            df_col_list.extend(columns_to_update)
+            # loop through columns to populate several variables
+            for col in columns_to_update:
+                # assume table and dataframe column names are identical, rename df column names if mismatch
+                sql_update = sql_update + f"{col} = %s, "
+                # add column to list to add into sql string post for loop
+                col_list = col_list + col + ", "
+            # remove extra white space and comma from string
+            sql_update = sql_update[:-2]
+            # remove extra white space and comma from string
+            col_list = col_list[:-2]
+            # add variables to sql string
+            sql_update = sql_update + f" WHERE {where_column_name} = %s"
+            # add where column to list at the end
+            df_col_list.extend([where_column_name])
+            # trim dataframe based on columns to include in update
+            df_to_update = df[df_col_list]
+            # convert the rows in the dataframe into a list of tuples
+            data = [tuple(x) for x in df_to_update.values]
+            # execute insert of records
+            cursor.executemany(sql_update, data)
+            # commit the sql statement
+            connection.commit()
+            # log to console commiting update to table now
+            log.info(f"[Commiting update to snowflake table: {table_name}...]")
+        # exception block - error updating rows in snowflake table
+        except Exception as e:
+            # log error when updating rows in snowflake table
+            log.exception(f"[Error updating rows in snowflake table: {table_name}...{e}]")
+
+    def delete_rows_in_snowflake_table(self, connection, cursor,  table_name, column_name, record_list):
+        """Description: generate a query string to delete records from a snowflake table
+           Parameters:
+
+           engine                   - snowflake login connection
+           table_name               - table in snowflake to update
+           columns_name             - column name in snowflake table with key used to delete
+           record_list              - list of key IDs to delete records
+
+           Return:                  - None - delete records
+        """
+        # try except block
+        try:
+            # Example with parameterization
+            sql_delete = "DELETE FROM " + table_name + " WHERE " + column_name + " IN " + record_list + ";"
+            print(sql_delete)
+            # execute the sql to delete records on the table
+            cursor.execute(sql_delete)
+            # commit the action deleting records off the table
+            connection.commit()
+            # log to console commiting update to table now
+            log.info(f"[Commiting delete to snowflake table: {table_name}...]")
+        # exception block - error deleting rows in snowflake table
+        except Exception as e:
+            # log error when deleting rows in snowflake table
+            log.exception(f"[Error deleting rows in snowflake table: {table_name}...{e}]")
+
 
 class Custom_Utilities:
     def __init__(self):
